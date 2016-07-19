@@ -325,6 +325,27 @@ class RegistryDbo(BaseDbo):
         return self.collection.find()
 
 
-def change_status_of_process():
-    pass
+def create_database():
+    with open(APP_ROOT + '/config/connector.json') as file:
+        config = json.loads(file.read())
+    mongo_url = config['internal']['mongodb']
+    mongo_db = config['internal']['database']
+    return MongoClient(mongo_url)[mongo_db]
+
+
+def change_status_of_process(new_status):
+    database = create_database()
+
+
+
+"""
+- _id (= videoId-categoryId)
+- videoId
+- categoryId
+- status (notified, metadatagathering, downloading, uploading, error, success)
+- message
+- targetPlarform
+- targetPlatformVideoId
+- mappingId
+"""
 
