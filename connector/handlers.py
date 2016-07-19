@@ -23,3 +23,18 @@ def update_video_on_youtube(category_id, video_id):
 @youtube.route('/unpublish/youtube/<string:category_id>/<string:video_id>')
 def unpublish_video_on_youtube(category_id, video_id):
     pass
+
+
+@facebook.route('/upload/facebook/<string:category_id>/<string:video_id>')
+def upload_video_to_facebook(category_id, video_id):
+    pass
+
+
+@facebook.route('/update/facebook/<string:category_id>/<string:video_id>')
+def update_video_on_facebook(category_id, video_id):
+    pass
+
+
+@facebook.route('/unpublish/facebook/<string:category_id>/<string:video_id>')
+def unpublish_video_on_facebook(category_id, video_id):
+    pass
