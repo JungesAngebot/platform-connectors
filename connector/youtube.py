@@ -1,6 +1,8 @@
+import random
 import sys
 
 import httplib2
+import time
 from commonspy.logging import log_error
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -65,6 +67,42 @@ def create_youtube_instance():
     return youtube, youtube_partner
 
 
+def resumable_upload(insert_request):
+    """ Actually uploads the video to youtube.
+    If an error occours the function will retry the
+    upload. (with time span between uploads).
+    """
+    response = None
+    error = None
+    retry = 0
+    video_id = None
+    while response is None:
+        try:
+            print("Uploading file...")
+            status, response = insert_request.next_chunk()
+            if 'id' in response:
+                video_id = response['id']
+                print("Video id '%s' was successfully uploaded." % video_id)
+            else:
+                exit("The upload failed with an unexpected response: %s" % response)
+        except HttpError as e:
+            print(e.resp)
+            raise
+
+        if error is not None:
+            print(error)
+            retry += 1
+            if retry > 10:
+                exit("No longer attempting to retry.")
+
+            max_sleep = 2 ** retry
+            sleep_seconds = random.random() * max_sleep
+            print("Sleeping %f seconds and then retrying..." % sleep_seconds)
+            time.sleep(sleep_seconds)
+    return video_id
+
+
+
 def initialize_upload(youtube, options, channel_id):
     """ initialized the youtube video upload. This
     mechanism uses the youtube partner authentication / client
@@ -100,5 +138,37 @@ def initialize_upload(youtube, options, channel_id):
     except FileNotFoundError as e:
         message_dbo = MessageDbo()
         message_dbo.add_upload_error(options['filename'], options['title'], e.__str__())
+    return None
+
+
+def upload_video_to_youtube(video):
+    """ Triggers the video upload initialization method.
+    For each video the gathered metadata will be set
+    and the video will be uploaded. In case of an error
+    the upload mechanism retries the upload. Uploading
+    errors are logged into a mongo db collection.
+    """
+    options = dict(
+        keywords=video.tags,
+        title=video.title,
+        description=video.description,
+        category=22,
+        privacy_status='private',
+        filename=video.filename
+    )
+    youtube = create_youtube_instance()
+    message_dbo = MessageDbo()
+    try:
+        video_id = initialize_upload(youtube, options, video.target_channel)
+
+        if video_id is None or video_id == '':
+            message_dbo.add_upload_error(video.filename, video.title, 'Unable to upload video to youtube.')
+        else:
+            registry_dbo = RegistryDbo()
+            registry_dbo.register(video.video_id, video_id, options)
+            message_dbo.add_upload_success(video.filename, video.title)
+        return video_id
+    except HttpError as e:
+        message_dbo.add_upload_error(video.filename, video.title, e)
     return None
 
