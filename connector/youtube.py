@@ -4,6 +4,7 @@ import httplib2
 from commonspy.logging import log_error
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets, Storage
 from oauth2client.tools import run_flow
 
@@ -62,3 +63,42 @@ def create_youtube_instance():
                             YOUTUBE_CONTENT_ID_API_VERSION, http=credentials.authorize(httplib2.Http()))
 
     return youtube, youtube_partner
+
+
+def initialize_upload(youtube, options, channel_id):
+    """ initialized the youtube video upload. This
+    mechanism uses the youtube partner authentication / client
+    and is only able to upload videos to a multi channel
+    youtube network.
+
+    :param youtube: youtube client (standard and partner)
+    :param options: video options and metadata
+    :param channel_id: the target channel
+    :return: resumable upload
+    """
+    tags = options['keywords']
+    body = dict(
+        snippet=dict(
+            title=options['title'],
+            description=options['description'],
+            tags=tags,
+            categoryId=options['category']
+        ),
+        status=dict(
+            privacyStatus=options['privacy_status']
+        )
+    )
+    try:
+        insert_request = youtube[0].videos().insert(
+            part=','.join(body.keys()),
+            body=body,
+            onBehalfOfContentOwner=get_content_owner_id(youtube[1]),
+            onBehalfOfContentOwnerChannel=channel_id,
+            media_body=MediaFileUpload(options['filename'], chunksize=-1, resumable=True)
+        )
+        return resumable_upload(insert_request)
+    except FileNotFoundError as e:
+        message_dbo = MessageDbo()
+        message_dbo.add_upload_error(options['filename'], options['title'], e.__str__())
+    return None
+
