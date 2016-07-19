@@ -1,8 +1,8 @@
 import random
 import sys
+import time
 
 import httplib2
-import time
 from commonspy.logging import log_error
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -102,7 +102,6 @@ def resumable_upload(insert_request):
     return video_id
 
 
-
 def initialize_upload(youtube, options, channel_id):
     """ initialized the youtube video upload. This
     mechanism uses the youtube partner authentication / client
@@ -171,4 +170,3 @@ def upload_video_to_youtube(video):
     except HttpError as e:
         message_dbo.add_upload_error(video.filename, video.title, e)
     return None
-
