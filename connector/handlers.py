@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
+from commonspy.logging import log_info
 from flask import Flask
 
 from connector import youtube, facebook
@@ -19,16 +20,17 @@ def execute_async(function, video_id):
 
 @youtube.route('/upload/youtube/<string:category_id>/<string:video_id>')
 def upload_video_to_youtube(category_id, video_id):
-    pass
+    log_info('Going to upload video with id %s and category %s to youtube.' % (video_id, category_id))
 
 
 @youtube.route('/update/youtube/<string:category_id>/<string:video_id>')
 def update_video_on_youtube(category_id, video_id):
-    pass
+    log_info('Going to update video with id %s and category %s to youtube.' % (video_id, category_id))
 
 
 @youtube.route('/unpublish/youtube/<string:category_id>/<string:video_id>')
 def unpublish_video_on_youtube(category_id, video_id):
+    log_info('Going to unpublish video with id %s and category %s to youtube.' % (video_id, category_id))
     pass
 
 
