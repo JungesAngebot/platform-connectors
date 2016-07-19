@@ -35,14 +35,14 @@ def unpublish_video_on_youtube(category_id, video_id):
 
 @facebook.route('/upload/facebook/<string:category_id>/<string:video_id>')
 def upload_video_to_facebook(category_id, video_id):
-    pass
+    log_info('Going to upload video with id %s and category %s to facebook.' % (video_id, category_id))
 
 
 @facebook.route('/update/facebook/<string:category_id>/<string:video_id>')
 def update_video_on_facebook(category_id, video_id):
-    pass
+    log_info('Going to update video with id %s and category %s to facebook.' % (video_id, category_id))
 
 
 @facebook.route('/unpublish/facebook/<string:category_id>/<string:video_id>')
 def unpublish_video_on_facebook(category_id, video_id):
-    pass
+    log_info('Going to unpublish video with id %s and category %s to facebook.' % (video_id, category_id))
