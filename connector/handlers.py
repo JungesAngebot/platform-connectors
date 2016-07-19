@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from flask import Flask
 
 from connector import youtube, facebook
@@ -8,6 +10,11 @@ def create_app():
     app.register_blueprint(youtube)
     app.register_blueprint(facebook)
     return app
+
+
+def execute_async(function, video_id):
+    executor = ThreadPoolExecutor(max_workers=1)
+    executor.submit(function, video_id)
 
 
 @youtube.route('/upload/youtube/<string:category_id>/<string:video_id>')
