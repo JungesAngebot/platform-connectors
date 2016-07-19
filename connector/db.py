@@ -323,3 +323,8 @@ class RegistryDbo(BaseDbo):
     def registry(self):
         """ Returns all registry entries."""
         return self.collection.find()
+
+
+def change_status_of_process():
+    pass
+
