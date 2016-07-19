@@ -31,7 +31,6 @@ def update_video_on_youtube(category_id, video_id):
 @youtube.route('/unpublish/youtube/<string:category_id>/<string:video_id>')
 def unpublish_video_on_youtube(category_id, video_id):
     log_info('Going to unpublish video with id %s and category %s to youtube.' % (video_id, category_id))
-    pass
 
 
 @facebook.route('/upload/facebook/<string:category_id>/<string:video_id>')
