@@ -1,11 +1,8 @@
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
-from tornado.wsgi import WSGIContainer
-
-from connector import app
+from flask import Flask
 
 
-def bootstrap_connector_interface():
-    http_server = HTTPServer(WSGIContainer(app))
-    http_server.listen(5000)
-    IOLoop.instance().start()
+def create_app():
+    app = Flask(__name__)
+
+    return app
+
