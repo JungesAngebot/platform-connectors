@@ -170,3 +170,74 @@ def upload_video_to_youtube(video):
     except HttpError as e:
         message_dbo.add_upload_error(video.filename, video.title, e)
     return None
+
+
+def update_video_on_youtube(video):
+    """ Update metadata of video on youtube. """
+    registry_dbo = RegistryDbo()
+
+    youtube_id = registry_dbo.youtube_id_by_video_id(video.video_id)
+
+    if youtube_id is None:
+        raise UpdateError('Youtube_id not found for ' + video.video_id)
+
+    youtube = create_youtube_instance()
+
+    video_list_response = youtube[0].videos().list(
+        id=youtube_id,
+        part='snippet'
+    ).execute()
+    if not video_list_response['items']:
+        raise UpdateError('Video not found for id ' + youtube_id)
+
+    video_list_snippet = video_list_response['items'][0]['snippet']
+    video_list_snippet['title'] = video.title
+    video_list_snippet['description'] = video.description
+    video_list_snippet['categoryId'] = 22
+
+    if "tags" not in video_list_snippet:
+        video_list_snippet["tags"] = []
+    video_list_snippet["tags"].append([])
+
+    youtube[0].videos().update(
+        part='snippet',
+        onBehalfOfContentOwner=get_content_owner_id(youtube[1]),
+        body=dict(
+            snippet=video_list_snippet,
+            id=youtube_id
+        )
+    ).execute()
+
+
+def unpublish_video_on_youtube(video):
+    """ Set the privacyStatus to 'private' of the given video if it
+    was uploaded to youtube.
+
+    If the video was not uploaded an UnpublishError is thrown.
+    """
+    registry_dbo = RegistryDbo()
+
+    youtube_id = registry_dbo.youtube_id_by_video_id(video.video_id)
+
+    if youtube_id is None:
+        raise UnpublishError('Youtube_id not found for ' + video.video_id)
+
+    youtube = create_youtube_instance()
+
+    video_list_response = youtube[0].videos().list(
+        id=youtube_id,
+        part='status'
+    ).execute()
+    if not video_list_response['items']:
+        raise UnpublishError('Video with id ' + youtube_id + " not found on youtube.")
+
+    video_list_snippet = video_list_response['items'][0]['status']
+    video_list_snippet['privacyStatus'] = 'private'
+    youtube[0].videos().update(
+        part='status',
+        onBehalfOfContentOwner=get_content_owner_id(youtube[1]),
+        body=dict(
+            status=video_list_snippet,
+            id=youtube_id
+        )
+    ).execute()
