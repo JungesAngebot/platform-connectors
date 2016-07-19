@@ -1,0 +1,8 @@
+Flask
+Flask-Script
+oauth2client
+httplib2
+tornado
+pymongo
+facebook-sdk
+google-api-python-client
