@@ -25,6 +25,20 @@ youtube_scopes = (
 )
 
 
+class UpdateError(Exception):
+    """ Error during update operations. """
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+
+class UnpublishError(Exception):
+    """ Error during unpublish operations. """
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+
 def get_content_owner_id(youtube_partner):
     """ Function to gather the youtube content owner
     id. This id is required to upload a video to
