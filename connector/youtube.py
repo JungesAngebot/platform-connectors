@@ -11,6 +11,7 @@ from oauth2client.client import flow_from_clientsecrets, Storage
 from oauth2client.tools import run_flow
 
 from connector import APP_ROOT
+from connector.db import MessageDbo, RegistryDbo
 
 INVALID_CREDENTIALS = b"Invalid Credentials"
 
