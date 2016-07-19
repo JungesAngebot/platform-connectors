@@ -1,7 +1,9 @@
 import sys
 
 import httplib2
+from commonspy.logging import log_error
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from oauth2client.client import flow_from_clientsecrets, Storage
 from oauth2client.tools import run_flow
 
@@ -18,6 +20,27 @@ youtube_scopes = (
     'https://www.googleapis.com/auth/youtube',
     'https://www.googleapis.com/auth/youtubepartner'
 )
+
+
+def get_content_owner_id(youtube_partner):
+    """ Function to gather the youtube content owner
+    id. This id is required to upload a video to
+    a multi channel network on youtube.
+    """
+    content_owners_list_response = None
+    try:
+        content_owners_list_response = youtube_partner.contentOwners().list(
+            fetchMine=True
+        ).execute()
+    except HttpError as e:
+        if INVALID_CREDENTIALS in e.content:
+            log_error("The request is not authorized by a Google Account that "
+                      "is linked to a YouTube content owner. Please delete '%s' and "
+                      "re-authenticate with a YouTube content owner account." %
+                      "{0}-oauth2.json".format(sys.argv[0]))
+            raise
+
+    return content_owners_list_response["items"][0]["id"]
 
 
 def create_youtube_instance():
