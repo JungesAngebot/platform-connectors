@@ -3,13 +3,13 @@ from concurrent.futures import ThreadPoolExecutor
 from commonspy.logging import log_info
 from flask import Flask, jsonify
 
-from connector import youtube, facebook
+from connector import youtube, api
+from connector.db import change_status_of_process
 
 
 def create_app():
     app = Flask(__name__)
     app.register_blueprint(youtube)
-    app.register_blueprint(facebook)
     return app
 
 
@@ -18,97 +18,58 @@ def execute_async(function, video_id):
     executor.submit(function, video_id)
 
 
-@youtube.route('/upload/youtube/<string:category_id>/<string:video_id>')
-def upload_video_to_youtube(category_id, video_id):
-    log_info('Going to upload video with id %s and category %s to youtube.' % (video_id, category_id))
+@api.route('/upload/<string:registry_id>')
+def upload_video_to_youtube(registry_id):
+    log_info('Going to upload video with registry id %s.' % registry_id)
 
     try:
         pass
     except Exception:
-        pass
+        change_status_of_process(registry_id, 'error')
+        return jsonify(dict(
+            status='error',
+            registry_id=registry_id
+        ))
 
     return jsonify(dict(
         status='success',
-        video_id=video_id,
-        category_id=category_id
+        registry_id=registry_id
     ))
 
 
-@youtube.route('/update/youtube/<string:category_id>/<string:video_id>')
-def update_video_on_youtube(category_id, video_id):
-    log_info('Going to update video with id %s and category %s to youtube.' % (video_id, category_id))
+@api.route('/update/<string:registry_id>')
+def update_video_on_youtube(registry_id):
+    log_info('Going to update video with registry id %s.' % registry_id)
 
     try:
         pass
     except Exception:
-        pass
+        change_status_of_process(registry_id, 'error')
+        return jsonify(dict(
+            status='error',
+            registry_id=registry_id
+        ))
 
     return jsonify(dict(
         status='success',
-        video_id=video_id,
-        category_id=category_id
+        registry_id=registry_id
     ))
 
 
-@youtube.route('/unpublish/youtube/<string:category_id>/<string:video_id>')
-def unpublish_video_on_youtube(category_id, video_id):
-    log_info('Going to unpublish video with id %s and category %s to youtube.' % (video_id, category_id))
+@api.route('/unpublish/<string:registry_id>')
+def unpublish_video_on_youtube(registry_id):
+    log_info('Going to unpublish video with registry id %s.' % registry_id)
 
     try:
         pass
     except Exception:
-        pass
+        change_status_of_process(registry_id, 'error')
+        return jsonify(dict(
+            status='error',
+            registry_id=registry_id
+        ))
 
     return jsonify(dict(
         status='success',
-        video_id=video_id,
-        category_id=category_id
-    ))
-
-
-@facebook.route('/upload/facebook/<string:category_id>/<string:video_id>')
-def upload_video_to_facebook(category_id, video_id):
-    log_info('Going to upload video with id %s and category %s to facebook.' % (video_id, category_id))
-
-    try:
-        pass
-    except Exception:
-        pass
-
-    return jsonify(dict(
-        status='success',
-        video_id=video_id,
-        category_id=category_id
-    ))
-
-
-@facebook.route('/update/facebook/<string:category_id>/<string:video_id>')
-def update_video_on_facebook(category_id, video_id):
-    log_info('Going to update video with id %s and category %s to facebook.' % (video_id, category_id))
-
-    try:
-        pass
-    except Exception:
-        pass
-
-    return jsonify(dict(
-        status='success',
-        video_id=video_id,
-        category_id=category_id
-    ))
-
-
-@facebook.route('/unpublish/facebook/<string:category_id>/<string:video_id>')
-def unpublish_video_on_facebook(category_id, video_id):
-    log_info('Going to unpublish video with id %s and category %s to facebook.' % (video_id, category_id))
-
-    try:
-        pass
-    except Exception:
-        pass
-
-    return jsonify(dict(
-        status='success',
-        video_id=video_id,
-        category_id=category_id
+        registry_id=registry_id
     ))

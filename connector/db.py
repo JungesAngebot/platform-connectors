@@ -4,6 +4,7 @@ import json
 from abc import ABCMeta
 
 from bson.objectid import ObjectId
+from commonspy.logging import log_error
 from gridfs import GridFS
 from pymongo import MongoClient
 
@@ -325,17 +326,30 @@ class RegistryDbo(BaseDbo):
         return self.collection.find()
 
 
-def create_database():
+def create_database(database_to_use, database_name):
     with open(APP_ROOT + '/config/connector.json') as file:
         config = json.loads(file.read())
-    mongo_url = config['internal']['mongodb']
-    mongo_db = config['internal']['database']
+    mongo_url = config[database_to_use]['mongodb']
+    mongo_db = config[database_to_use][database_name]
     return MongoClient(mongo_url)[mongo_db]
 
 
-def change_status_of_process(new_status):
-    database = create_database()
+def change_status_of_process(registry_id, new_status):
+    database = create_database('internal', 'connector-db')
+    collection = database['registry']
+    try:
+        registry_entry = collection.find_one({'_id': ObjectId(registry_id)})
+        registry_entry['status'] = new_status
 
+        try:
+            collection.save(registry_entry)
+        except Exception as e:
+            log_error('Cannot save entry with registry id %s.' % registry_id)
+            raise Exception('Cannot save entry with registry id %s.' % registry_id, e)
+
+    except Exception as e:
+        log_error('Cannot find entry with registry id %s.' % registry_id)
+        raise Exception('Cannot find entry with registry id %s.' % registry_id, e)
 
 
 """
