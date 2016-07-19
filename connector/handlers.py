@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 from commonspy.logging import log_info
-from flask import Flask
+from flask import Flask, jsonify
 
 from connector import youtube, facebook
 
@@ -22,27 +22,58 @@ def execute_async(function, video_id):
 def upload_video_to_youtube(category_id, video_id):
     log_info('Going to upload video with id %s and category %s to youtube.' % (video_id, category_id))
 
+    return jsonify(dict(
+        status='success',
+        video_id=video_id,
+        category_id=category_id
+    ))
+
 
 @youtube.route('/update/youtube/<string:category_id>/<string:video_id>')
 def update_video_on_youtube(category_id, video_id):
     log_info('Going to update video with id %s and category %s to youtube.' % (video_id, category_id))
+    return jsonify(dict(
+        status='success',
+        video_id=video_id,
+        category_id=category_id
+    ))
 
 
 @youtube.route('/unpublish/youtube/<string:category_id>/<string:video_id>')
 def unpublish_video_on_youtube(category_id, video_id):
     log_info('Going to unpublish video with id %s and category %s to youtube.' % (video_id, category_id))
+    return jsonify(dict(
+        status='success',
+        video_id=video_id,
+        category_id=category_id
+    ))
 
 
 @facebook.route('/upload/facebook/<string:category_id>/<string:video_id>')
 def upload_video_to_facebook(category_id, video_id):
     log_info('Going to upload video with id %s and category %s to facebook.' % (video_id, category_id))
+    return jsonify(dict(
+        status='success',
+        video_id=video_id,
+        category_id=category_id
+    ))
 
 
 @facebook.route('/update/facebook/<string:category_id>/<string:video_id>')
 def update_video_on_facebook(category_id, video_id):
     log_info('Going to update video with id %s and category %s to facebook.' % (video_id, category_id))
+    return jsonify(dict(
+        status='success',
+        video_id=video_id,
+        category_id=category_id
+    ))
 
 
 @facebook.route('/unpublish/facebook/<string:category_id>/<string:video_id>')
 def unpublish_video_on_facebook(category_id, video_id):
     log_info('Going to unpublish video with id %s and category %s to facebook.' % (video_id, category_id))
+    return jsonify(dict(
+        status='success',
+        video_id=video_id,
+        category_id=category_id
+    ))
