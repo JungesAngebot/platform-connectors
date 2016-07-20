@@ -100,6 +100,7 @@ class VideoModel(object):
         self.keywords = None
         self.filename = None
         self.download_url = None
+        self.image_id = None
 
     @classmethod
     def create_from_video_id(cls, video_id):
@@ -112,6 +113,7 @@ class VideoModel(object):
             video.keywords = video_dict['tags'].split(',') if video_dict['tags'] else []
             video.filename = '%s.mpeg' % video_id
             video.download_url = video_dict['downloadUrl']
+            video.image_id = video_dict['image_id'] if 'image_id' in video_dict else None
             return video
         except Exception as e:
             log_error('Cannot retrieve video with id %s from asset collection.' % video_id)
