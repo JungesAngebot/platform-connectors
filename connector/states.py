@@ -240,6 +240,9 @@ class Deleted(object):
     def _fire_error(self):
         self.error_state.run()
 
+    def _cleanup(self):
+        pass
+
     def run(self):
         try:
             self.registry_model.set_state_and_persist('deleted')
