@@ -5,12 +5,12 @@ from commonspy.logging import log_error
 from connector.db import RegistryModel, VideoModel
 
 
-class DownloadingError:
+class DownloadingError(object):
     def run(self):
         pass
 
 
-class Downloading:
+class Downloading(object):
     def __init__(self, registry_id):
         self.error_state = DownloadingError
         self.next_state = Uploading
@@ -45,6 +45,6 @@ class Downloading:
         return cls(registry_id)
 
 
-class Uploading:
+class Uploading(object):
     def run(self, video):
         pass
