@@ -42,6 +42,11 @@ class RegistryModel(object):
         self.target_platform = None
         self.target_platform_video_id = None
         self.mapping_id = None
+        self.video_hash_code = None
+
+    def update_video_hash_code(self, hash_code):
+        self.video_hash_code = hash_code
+        self._persist()
 
     def set_state_and_persist(self, state):
         self.status = state
@@ -68,7 +73,8 @@ class RegistryModel(object):
             message=self.message,
             targetPlatform=self.target_platform,
             targetPlatformVideoId=self.target_platform_video_id,
-            mappingId=self.mapping_id
+            mappingId=self.mapping_id,
+            video_hash_code=self.video_hash_code
         )
 
     @classmethod
