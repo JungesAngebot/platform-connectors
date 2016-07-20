@@ -1,3 +1,4 @@
+import hashlib
 import os
 
 from pymongo import MongoClient
@@ -97,6 +98,7 @@ class VideoModel(object):
         self.filename = None
         self.download_url = None
         self.image_id = None
+        self.hash_code = None
 
     @classmethod
     def create_from_video_id(cls, video_id):
@@ -110,6 +112,14 @@ class VideoModel(object):
             video.filename = '%s.mpeg' % video_id
             video.download_url = video_dict['downloadUrl']
             video.image_id = video_dict['image_id'] if 'image_id' in video_dict else None
+            video_hash_code = hashlib.md5()
+            video_hash_code.update(bytes(video.title))
+            video_hash_code.update(bytes(video.description))
+            video_hash_code.update(bytes(str(video.keywords)))
+            video_hash_code.update(bytes(video.filename))
+            video_hash_code.update(bytes(video.download_url))
+            video_hash_code.update(bytes(video.image_id))
+            video.hash_code = video_hash_code.digest()
             return video
         except Exception as e:
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
