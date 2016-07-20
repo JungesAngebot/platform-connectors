@@ -196,3 +196,17 @@ class Inactive(object):
     @classmethod
     def create_inactive_state(cls, registry_model):
         return cls(registry_model)
+
+
+class Deleting(object):
+    def __init__(self, registry_model):
+        self.next_state = None
+        self.error_state = None
+        self.registry_model = registry_model
+
+    def run(self):
+        pass
+
+    @classmethod
+    def create_deleting_state(cls, registry_model):
+        return cls(registry_model)
