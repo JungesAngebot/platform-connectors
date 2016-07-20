@@ -1,3 +1,6 @@
+from connector.db import RegistryModel
+
+
 class DownloadingError:
     def run(self):
         pass
@@ -14,7 +17,7 @@ class Downloading:
         self.next_state().run(None)
 
     def run(self):
-        pass
+        registry_model = RegistryModel.create_from_registry_id(self.registry_id)
 
     def on_error(self):
         self.error_state().run()
