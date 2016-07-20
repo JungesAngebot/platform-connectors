@@ -3,6 +3,7 @@ import urllib.request
 from commonspy.logging import log_error
 
 from connector.db import RegistryModel, VideoModel
+from connector.platforms import PlatformInteraction
 
 
 class DownloadingError(object):
@@ -46,5 +47,8 @@ class Downloading(object):
 
 
 class Uploading(object):
-    def run(self, video):
-        pass
+    def __init__(self):
+        self.interaction = PlatformInteraction()
+
+    def run(self, video, registry_model):
+        self.interaction.execute_platform_interaction(registry_model.target_platform, 'upload', video)
