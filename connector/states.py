@@ -171,7 +171,7 @@ class Unpublish(object):
 class Inactive(object):
     def __init__(self, registry_model):
         self.error_state = None
-        self.registry_model = None
+        self.registry_model = registry_model
 
     def _fire_error(self):
         self.error_state.run()
@@ -185,5 +185,6 @@ class Inactive(object):
             log_error('Cannot set state of video with id %s and registry id %s to inactive.' % (video_id, registry_id))
             self._fire_error()
 
-    def create_inactive_state(self):
-        pass
+    @classmethod
+    def create_inactive_state(cls, registry_model):
+        return cls(registry_model)
