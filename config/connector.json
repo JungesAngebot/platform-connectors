@@ -1,0 +1,18 @@
+{
+  "web": {
+    "secret_key": "ITSASECRET"
+  },
+  "internal": {
+    "mongodb": "mongodb://localhost:27017/",
+    "database": "connector-db",
+    "mapping_collection": "mappings",
+    "user_collection": "users",
+    "message_collection": "messages",
+    "registry_collection": "registry"
+  },
+  "source": {
+    "mongodb": "mongodb://localhost:27017/",
+    "database": "einszwo_internal",
+    "collection": "assets"
+  }
+}

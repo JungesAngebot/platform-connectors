@@ -1,0 +1,24 @@
+{
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "_module": "oauth2client.client",
+  "id_token": null,
+  "revoke_uri": "https://accounts.google.com/o/oauth2/revoke",
+  "client_id": "131544134888-9uimhgu696gq2vie2g8lj8c71pp5rv2t.apps.googleusercontent.com",
+  "user_agent": null,
+  "invalid": false,
+  "access_token": "ya29.CjEeA8WLe_EPklFNKxVz3j-_9uvf0gMJo3AqoWWF43ZszXwqdL7Ve57_E_qX5_Sxyv30",
+  "token_response": {
+    "access_token": "ya29.CjEeA8WLe_EPklFNKxVz3j-_9uvf0gMJo3AqoWWF43ZszXwqdL7Ve57_E_qX5_Sxyv30",
+    "token_type": "Bearer",
+    "expires_in": 3600
+  },
+  "client_secret": "qAdZzeIm37Bq2mh3XvQog_Sk",
+  "token_info_uri": "https://www.googleapis.com/oauth2/v3/tokeninfo",
+  "_class": "OAuth2Credentials",
+  "refresh_token": "1/V_JtuIAQdJ2d1rZlEuVV-T7RDiBxhrAkqbmfnDoy1w4",
+  "scopes": [
+    "https://www.googleapis.com/auth/youtube",
+    "https://www.googleapis.com/auth/youtubepartner"
+  ],
+  "token_expiry": "2016-07-12T13:02:58Z"
+}
