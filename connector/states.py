@@ -232,6 +232,9 @@ class Deleted(object):
         self.registry_model = None
         self.error_state = None
 
+    def _fire_error(self):
+        self.error_state.run()
+
     def run(self):
         try:
             pass
@@ -239,6 +242,7 @@ class Deleted(object):
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
             log_error('Cannot set video with id %s and registry id %s to deleted.' % (video_id, registry_id))
+            self._fire_error()
 
     @classmethod
     def create_deleted_state(cls, registry_model):
