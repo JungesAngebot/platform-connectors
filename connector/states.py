@@ -1,34 +1,39 @@
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 
 class State(metaclass=ABCMeta):
-    def __init__(self):
-        self.prev_state = None
-        self.following_states = []
-        self.error_state = None
+
+    @abstractmethod
+    def run(self):
+        pass
 
 
-class Notified(State):
-    def __init__(self):
-        super().__init__()
+class BasicState(metaclass=ABCMeta, State):
+
+    @abstractmethod
+    def next_state(self):
+        pass
+
+    @abstractmethod
+    def error_state(self):
+        pass
 
 
-class DownloadingError(State):
-    def __init__(self):
-        super().__init__()
+class ErrorState(metaclass=ABCMeta, State):
+    pass
 
 
-class Uploading(State):
-    def __init__(self):
-        super().__init__()
+class DownloadingError(ErrorState):
+    def run(self):
+        pass
 
 
-class Downloading(State):
-    def __init__(self):
-        super().__init__()
-        self.prev_state = Notified
-        self.error_state = DownloadingError
-        self.following_states = None
+class Downloading(BasicState):
+    def run(self):
+        pass
 
+    def next_state(self):
+        pass
 
-
+    def error_state(self):
+        pass
