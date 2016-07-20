@@ -17,6 +17,16 @@ class UploadingError(object):
         pass
 
 
+class ActiveError(object):
+    def run(self):
+        pass
+
+
+class UpdatingError(object):
+    def run(self):
+        pass
+
+
 class Downloading(object):
     def __init__(self, registry_model):
         self.error_state = DownloadingError()
@@ -68,9 +78,9 @@ class Uploading(object):
             self.registry_model.set_intermediate_state_and_persist('uploading')
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video)
             self.next_state.run()
-        except Exception as e:
-            raise Exception(
-                'Cannot perform target platform upload of video with id %s and registry id %s.' % (self.registry_model.registry_id, self.registry_model.video_id)) from e
+        except Exception:
+            log_error('Cannot perform target platform upload of video with id %s and registry id %s.' % (self.registry_model.registry_id, self.registry_model.video_id))
+            self._fire_error()
 
     @classmethod
     def create_uploading_state(cls, registry_model):
@@ -80,18 +90,23 @@ class Uploading(object):
 class Active(object):
     def __init__(self, registry_model):
         self.registry_model = registry_model
+        self.error_state = ActiveError()
 
     def _cleanup(self):
         self.registry_model.set_intermediate_state_and_persist('')
         if os.path.isfile('%s.mpeg' % self.registry_model.video_id):
             os.remove('%s.mpeg' % self.registry_model.video_id)
 
+    def _fire_error(self):
+        self.error_state.run()
+
     def run(self):
         try:
             self.registry_model.set_state_and_persist('active')
             self._cleanup()
         except Exception as e:
-            raise Exception('Cannot set state to active.') from e
+            log_error('Cannot set state to active.')
+            self._fire_error()
 
     @classmethod
     def create_active_state(cls, registry_model):
@@ -103,6 +118,10 @@ class Updating(object):
         self.registry_model = registry_model
         self.interaction = PlatformInteraction()
         self.next_state = Active.create_active_state(self.registry_model)
+        self.error_state = UpdatingError()
+
+    def _fire_error(self):
+        self.error_state.run()
 
     def run(self):
         try:
@@ -113,7 +132,8 @@ class Updating(object):
         except Exception as e:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
-            raise Exception('Unable to update video with id %s and registry id %s.' % (video_id, registry_id)) from e
+            log_error('Unable to update video with id %s and registry id %s.' % (video_id, registry_id))
+            self._fire_error()
 
     @classmethod
     def create_updating_state(cls, registry_model):
