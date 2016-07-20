@@ -3,7 +3,7 @@ from flask import Flask, jsonify
 
 from connector import api
 from connector.db import RegistryModel
-from connector.states import Downloading
+from connector.states import Downloading, Updating
 
 
 def create_app():
@@ -19,7 +19,7 @@ def update_request(registry_id):
         if registry_model.status == 'notified':
             Downloading.create_downloading_state(registry_model).run()
         elif registry_model.status == 'active':
-            pass  # TODO - Update request here
+            Updating.create_updating_state(registry_model)
     except Exception as e:
         log_error(e)
     return jsonify({'status': 'success'})
