@@ -1,3 +1,5 @@
+import urllib.request
+
 from connector.db import RegistryModel, VideoModel
 
 
@@ -7,17 +9,20 @@ class DownloadingError:
 
 
 class Downloading:
-
     def __init__(self, registry_id):
         self.error_state = DownloadingError
         self.next_state = Uploading
         self.registry_id = registry_id
+        self.download_binary_from_kaltura_to_disk = urllib.request.urlretrieve
 
     def _next_state(self, video):
         self.next_state().run(None)
 
     def _download_binaries(self, download_url, filename):
-        urllib.request.urlretrieve(download_url, filename)
+        try:
+            self.download_binary_from_kaltura_to_disk(download_url, filename)
+        except OSError:
+            pass
 
     def run(self):
         registry_model = RegistryModel.create_from_registry_id(self.registry_id)
