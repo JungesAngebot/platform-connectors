@@ -12,7 +12,9 @@ class State(metaclass=ABCMeta):
 
 
 class BasicState(metaclass=ABCMeta, State):
-
+    """ Actual working state of the state machine.
+    This type of state is ether a final state or an intermediate state.
+    """
     @abstractmethod
     def next_state(self):
         pass
