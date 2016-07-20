@@ -210,7 +210,7 @@ class Inactive(object):
 
 class Deleting(object):
     def __init__(self, registry_model):
-        self.next_state = None
+        self.next_state = Deleted.create_deleted_state(registry_model)
         self.error_state = DeletingError()
         self.registry_model = registry_model
 
