@@ -1,6 +1,7 @@
 import os
 
 from bson import ObjectId
+from commonspy.logging import log_error
 from pymongo import MongoClient
 
 from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_REGISTRY, CONNECTOR_MAPPINGS, ASSET_DB, ASSETS
@@ -61,4 +62,4 @@ class RegistryModel(object):
             obj.mapping_id = registry_obj['mappingId']
             return obj
         except Exception as e:
-            pass
+            log_error('Cannot create registry model for registry id %s.' % registry_id)
