@@ -56,7 +56,7 @@ class Uploading(object):
         self.error_state = UploadingError()
         self.interaction = PlatformInteraction()
         self.registry_model = registry_model
-        self.next_state = None
+        self.next_state = Active.create_active_state(self.registry_model)
 
     def _fire_error(self):
         self.error_state.run()
@@ -79,7 +79,10 @@ class Active(object):
         self.registry_model = registry_model
 
     def run(self):
-        pass
+        try:
+            pass
+        except Exception as e:
+            raise Exception('Cannot set state to active.') from e
 
     @classmethod
     def create_active_state(cls, registry_model):
