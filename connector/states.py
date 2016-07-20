@@ -134,10 +134,10 @@ class Active(object):
 
 
 class Updating(object):
-    def __init__(self, registry_model, next_state=None):
+    def __init__(self, registry_model):
         self.registry_model = registry_model
         self.interaction = PlatformInteraction()
-        self.next_state = Active.create_active_state(self.registry_model) if next_state is None else next_state
+        self.next_state = Active.create_active_state(self.registry_model)
         self.error_state = UpdatingError()
 
     def _fire_error(self):
@@ -158,10 +158,6 @@ class Updating(object):
     @classmethod
     def create_updating_state(cls, registry_model):
         return cls(registry_model)
-
-    @classmethod
-    def create_updating_state_with_overwritten_next_state(cls, registry_model, next_state):
-        return cls(registry_model, next_state)
 
 
 class Unpublish(object):
