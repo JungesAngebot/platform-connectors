@@ -242,7 +242,7 @@ class Deleted(object):
 
     def run(self):
         try:
-            pass
+            self.registry_model.set_state_and_persist('deleted')
         except Exception:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
