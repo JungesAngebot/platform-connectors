@@ -188,9 +188,10 @@ class Unpublish(object):
 
 
 class Inactive(object):
-    def __init__(self, registry_model):
+    def __init__(self, registry_model, next_state=None):
         self.error_state = InactiveError()
         self.registry_model = registry_model
+        self.next_state = next_state
 
     def _fire_error(self):
         self.error_state.run()
