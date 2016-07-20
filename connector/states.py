@@ -65,6 +65,7 @@ class Uploading(object):
         try:
             self.registry_model.set_intermediate_state_and_persist('uploading')
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video)
+            self.next_state.run()
         except Exception as e:
             raise Exception(
                 'Cannot perform target platform upload of video with id %s and registry id %s.' % (self.registry_model.registry_id, self.registry_model.video_id)) from e
@@ -80,7 +81,7 @@ class Active(object):
 
     def run(self):
         try:
-            pass
+            self.registry_model.set_state_and_persist('active')
         except Exception as e:
             raise Exception('Cannot set state to active.') from e
 
