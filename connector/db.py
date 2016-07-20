@@ -59,5 +59,6 @@ class RegistryModel(object):
             obj.target_platform = registry_obj['targetPlatform']
             obj.target_platform_video_id = registry_obj['targetPlatformVideoId']
             obj.mapping_id = registry_obj['mappingId']
+            return obj
         except Exception as e:
             pass
