@@ -11,10 +11,10 @@ class DownloadingError(object):
 
 
 class Downloading(object):
-    def __init__(self, registry_id):
+    def __init__(self, registry_model):
         self.error_state = DownloadingError
         self.next_state = Uploading
-        self.registry_id = registry_id
+        self.registry_model = registry_model
         self.download_binary_from_kaltura_to_disk = urllib.request.urlretrieve
 
     def _next_state(self, video):
@@ -29,9 +29,8 @@ class Downloading(object):
 
     def run(self):
         try:
-            registry_model = RegistryModel.create_from_registry_id(self.registry_id)
-            registry_model.set_intermediate_state_and_persist('downloading')
-            video_model = VideoModel.create_from_video_id(registry_model['videoId'])
+            self.registry_model.set_intermediate_state_and_persist('downloading')
+            video_model = VideoModel.create_from_video_id(self.registry_model['videoId'])
             self._download_binaries(video_model.download_url, video_model.filename)
             self._next_state(video_model)
         except Exception as e:
@@ -43,7 +42,7 @@ class Downloading(object):
 
     @classmethod
     def create_downloading_state(cls, registry_id):
-        return cls(registry_id)
+        return cls(RegistryModel.create_from_registry_id(registry_id))
 
 
 class Uploading(object):
