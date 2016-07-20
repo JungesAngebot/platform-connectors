@@ -41,8 +41,8 @@ class Downloading(object):
         self.error_state().run()
 
     @classmethod
-    def create_downloading_state(cls, registry_id):
-        return cls(RegistryModel.create_from_registry_id(registry_id))
+    def create_downloading_state(cls, registry_model):
+        return cls(registry_model)
 
 
 class Uploading(object):
