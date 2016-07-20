@@ -155,7 +155,13 @@ class Unpublish(object):
         self.error_state.run()
 
     def run(self):
-        pass
+        try:
+            pass
+        except Exception:
+            registry_id = self.registry_model.registry_id
+            video_id = self.registry_model.video_id
+            log_error('Cannot unpublish video with id %s and registry id %s.' % (video_id, registry_id))
+            self._fire_error()
 
     @classmethod
     def create_unpublish_state(cls, registry_model):
