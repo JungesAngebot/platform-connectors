@@ -150,6 +150,7 @@ class Unpublish(object):
         self.next_state = None
         self.error_state = UnpublishError()
         self.registry_model = registry_model
+        self.interaction = PlatformInteraction()
 
     def _fire_error(self):
         self.error_state.run()
@@ -157,6 +158,8 @@ class Unpublish(object):
     def run(self):
         try:
             self.registry_model.set_intermediate_state_and_persist('unpublishing')
+            video_model = VideoModel.create_from_video_id(self.registry_model.video_id)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'unpublish', video_model)
         except Exception:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
