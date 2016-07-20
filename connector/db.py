@@ -119,13 +119,13 @@ class VideoModel(object):
             video.download_url = video_dict['downloadUrl']
             video.image_id = video_dict['image_id'] if 'image_id' in video_dict else None
             video_hash_code = hashlib.md5()
-            video_hash_code.update(bytes(video.title))
-            video_hash_code.update(bytes(video.description))
-            video_hash_code.update(bytes(str(video.keywords)))
-            video_hash_code.update(bytes(video.filename))
-            video_hash_code.update(bytes(video.download_url))
-            video_hash_code.update(bytes(video.image_id))
-            video.hash_code = video_hash_code.digest()
+            video_hash_code.update(bytes(video.title.encode('UTF-8')))
+            video_hash_code.update(bytes(video.description.encode('UTF-8')))
+            video_hash_code.update(bytes(str(video.keywords).encode('UTF-8')))
+            video_hash_code.update(bytes(video.filename.encode('UTF-8')))
+            video_hash_code.update(bytes(video.download_url.encode('UTF-8')))
+            video_hash_code.update(bytes(video.image_id.encode('UTF-8')) if video.image_id is not None else "".encode('UTF-8'))
+            video.hash_code = video_hash_code.hexdigest()
             return video
         except Exception as e:
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
