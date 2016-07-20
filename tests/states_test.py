@@ -23,7 +23,8 @@ class RegistryModelMock(RegistryModel):
 
 
 class TestUploadMechanism(unittest.TestCase):
-    pass
+    def test_upload_video_notified_state(self):
+        pass
 
 
 class TestUpdateMechanism(unittest.TestCase):
