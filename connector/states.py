@@ -156,7 +156,7 @@ class Unpublish(object):
 
     def run(self):
         try:
-            pass
+            self.registry_model.set_intermediate_state_and_persist('unpublishing')
         except Exception:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
@@ -178,12 +178,17 @@ class Inactive(object):
 
     def run(self):
         try:
-            pass
+            self.registry_model.set_state_and_persist('inactive')
+
+            self._cleanup()
         except Exception:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
             log_error('Cannot set state of video with id %s and registry id %s to inactive.' % (video_id, registry_id))
             self._fire_error()
+
+    def _cleanup(self):
+        self.registry_model.set_intermediate_state_and_persist('')
 
     @classmethod
     def create_inactive_state(cls, registry_model):
