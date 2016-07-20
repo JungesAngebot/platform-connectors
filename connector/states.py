@@ -2,7 +2,10 @@ from abc import ABCMeta, abstractmethod
 
 
 class State(metaclass=ABCMeta):
-
+    """ Basic state class.
+    The class offers only the run method for a state. This method is commonly used by every
+    state of the state machine.
+    """
     @abstractmethod
     def run(self):
         pass
