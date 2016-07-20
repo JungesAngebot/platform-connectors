@@ -7,3 +7,11 @@ class TestUploadMechanism(unittest.TestCase):
 
 class TestUpdateMechanism(unittest.TestCase):
     pass
+
+
+class TestUnpublishMechanism(unittest.TestCase):
+    pass
+
+
+class TestDeleteMechanism(unittest.TestCase):
+    pass
