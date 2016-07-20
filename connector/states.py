@@ -1,5 +1,7 @@
 import urllib.request
 
+from commonspy.logging import log_error
+
 from connector.db import RegistryModel, VideoModel
 
 
@@ -25,11 +27,15 @@ class Downloading:
             pass
 
     def run(self):
-        registry_model = RegistryModel.create_from_registry_id(self.registry_id)
-        video_model = VideoModel.create_from_video_id(registry_model['videoId'])
-        self._download_binaries(video_model.download_url, video_model.filename)
+        try:
+            registry_model = RegistryModel.create_from_registry_id(self.registry_id)
+            video_model = VideoModel.create_from_video_id(registry_model['videoId'])
+            self._download_binaries(video_model.download_url, video_model.filename)
+        except Exception as e:
+            log_error('Cannot finish download of binary from kaltura. %s' % str(e))
+            self.fire_error()
 
-    def on_error(self):
+    def fire_error(self):
         self.error_state().run()
 
     @classmethod
