@@ -19,7 +19,7 @@ def execute_async(function, video_id):
 
 
 @api.route('/upload/<string:registry_id>')
-def upload_video_to_youtube(registry_id):
+def upload_video(registry_id):
     log_info('Going to upload video with registry id %s.' % registry_id)
 
     try:
@@ -38,7 +38,7 @@ def upload_video_to_youtube(registry_id):
 
 
 @api.route('/update/<string:registry_id>')
-def update_video_on_youtube(registry_id):
+def update_video(registry_id):
     log_info('Going to update video with registry id %s.' % registry_id)
 
     try:
@@ -57,7 +57,7 @@ def update_video_on_youtube(registry_id):
 
 
 @api.route('/unpublish/<string:registry_id>')
-def unpublish_video_on_youtube(registry_id):
+def unpublish_video(registry_id):
     log_info('Going to unpublish video with registry id %s.' % registry_id)
 
     try:

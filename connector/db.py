@@ -37,7 +37,6 @@ class BaseDbo(metaclass=ABCMeta):
 
 
 class GridFsDbo(BaseDbo):
-
     def __init__(self):
         super().__init__(use_external_db=True)
 
@@ -346,10 +345,37 @@ def change_status_of_process(registry_id, new_status):
         except Exception as e:
             log_error('Cannot save entry with registry id %s.' % registry_id)
             raise Exception('Cannot save entry with registry id %s.' % registry_id, e)
-
+        database.logout()
     except Exception as e:
+        database.logout()
         log_error('Cannot find entry with registry id %s.' % registry_id)
         raise Exception('Cannot find entry with registry id %s.' % registry_id, e)
+
+
+def get_registry_entry_by_registry_id(registry_id):
+    database = create_database('internal', 'connector-db')
+    collection = database['registry']
+
+    try:
+        return collection.find_one({'_id': ObjectId(registry_id)})
+    except Exception as e:
+        log_error("Cannot find registry entry with id %s" % registry_id)
+        raise Exception("Cannot find registry entry with id %s" % registry_id, e)
+    finally:
+        database.logout()
+
+
+def get_asset_metadata(video_id):
+    database = create_database('external', 'einszwo_internal')
+    collection = database['assets']
+
+    try:
+        return collection.find_one({'sourceId': video_id})
+    except Exception as e:
+        log_error("Cannot find asset with id %s" % video_id)
+        raise Exception("Cannot find asset with id %s" % video_id, e)
+    finally:
+        database.logout()
 
 
 """
@@ -362,4 +388,3 @@ def change_status_of_process(registry_id, new_status):
 - targetPlatformVideoId
 - mappingId
 """
-
