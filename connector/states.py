@@ -235,7 +235,7 @@ class Deleted(object):
 
     def __init__(self):
         self.registry_model = None
-        self.error_state = None
+        self.error_state = DeletedError()
 
     def _fire_error(self):
         self.error_state.run()
