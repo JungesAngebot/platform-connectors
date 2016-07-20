@@ -233,8 +233,8 @@ class Deleting(object):
 
 class Deleted(object):
 
-    def __init__(self):
-        self.registry_model = None
+    def __init__(self, registry_model):
+        self.registry_model = registry_model
         self.error_state = DeletedError()
 
     def _fire_error(self):
