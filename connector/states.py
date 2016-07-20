@@ -159,6 +159,10 @@ class Updating(object):
     def create_updating_state(cls, registry_model):
         return cls(registry_model)
 
+    @classmethod
+    def create_updating_state_with_overwritten_next_state(cls, registry_model, next_state):
+        return cls(registry_model, next_state)
+
 
 class Unpublish(object):
     def __init__(self, registry_model):
