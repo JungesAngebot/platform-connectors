@@ -29,7 +29,7 @@ def update_request(registry_id):
 @api.route('/unpublish/<string:registry_id>')
 def unpublish_request(registry_id):
     try:
-        pass
+        registry_model = RegistryModel.create_from_registry_id(registry_id)
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
@@ -39,7 +39,7 @@ def unpublish_request(registry_id):
 @api.route('/delete/<string:registry_id>')
 def delete_request(registry_id):
     try:
-        pass
+        registry_model = RegistryModel.create_from_registry_id(registry_id)
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
