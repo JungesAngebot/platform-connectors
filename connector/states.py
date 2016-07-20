@@ -30,6 +30,7 @@ class Downloading(object):
     def run(self):
         try:
             registry_model = RegistryModel.create_from_registry_id(self.registry_id)
+            registry_model.set_intermediate_state_and_persist('downloading')
             video_model = VideoModel.create_from_video_id(registry_model['videoId'])
             self._download_binaries(video_model.download_url, video_model.filename)
             self._next_state(video_model)
