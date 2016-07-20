@@ -32,6 +32,11 @@ class UnpublishError(object):
         pass
 
 
+class DeletingError(object):
+    def run(self):
+        pass
+
+
 class Downloading(object):
     def __init__(self, registry_model):
         self.error_state = DownloadingError()
