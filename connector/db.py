@@ -45,7 +45,27 @@ class RegistryModel(object):
         self.mapping_id = None
 
     def set_state_and_persist(self, state):
-        pass
+        self.status = state
+
+    def set_intermediate_state_and_persist(self, state):
+        self.intermediate_state = state
+
+    def _persist(self):
+        collection = MongoDbFactory.assets_collection()
+        collection.save(self._to_dict())
+
+    def _to_dict(self):
+        return dict(
+            _id=self.registry_id,
+            videoId=self.video_id,
+            categoryId=self.category_id,
+            status=self.status,
+            intermediateState=self.intermediate_state,
+            message=self.message,
+            targetPlatform=self.target_platform,
+            targetPlatformVideoId=self.target_platform_video_id,
+            mappingId=self.mapping_id
+        )
 
     @classmethod
     def create_from_registry_id(cls, registry_id):
@@ -62,8 +82,9 @@ class RegistryModel(object):
             obj.target_platform_video_id = registry_obj['targetPlatformVideoId']
             obj.mapping_id = registry_obj['mappingId']
             return obj
-        except Exception:
+        except Exception as e:
             log_error('Cannot create registry model for registry id %s.' % registry_id)
+            raise Exception('Cannot create registry model for registry id %s.' % registry_id) from e
 
 
 class VideoModel(object):
