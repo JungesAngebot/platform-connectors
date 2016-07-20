@@ -28,7 +28,12 @@ def update_request(registry_id):
 
 @api.route('/unpublish/<string:registry_id>')
 def unpublish_request(registry_id):
-    pass
+    try:
+        pass
+    except Exception as e:
+        log_error(e)
+        return jsonify({'status': 'error'})
+    return jsonify({'status': 'success'})
 
 
 @api.route('/delete/<string:registry_id>')
