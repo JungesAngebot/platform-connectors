@@ -16,13 +16,13 @@ class Downloading:
     def _next_state(self, video):
         self.next_state().run(None)
 
-    def _download_binaries(self, download_url):
-        pass
+    def _download_binaries(self, download_url, filename):
+        urllib.request.urlretrieve(download_url, filename)
 
     def run(self):
         registry_model = RegistryModel.create_from_registry_id(self.registry_id)
         video_model = VideoModel.create_from_video_id(registry_model['videoId'])
-        self._download_binaries(video_model.download_url)
+        self._download_binaries(video_model.download_url, video_model.filename)
 
     def on_error(self):
         self.error_state().run()

@@ -80,7 +80,7 @@ class VideoModel(object):
             video.title = video_dict['name']
             video.description = video_dict['text']
             video.keywords = video_dict['tags'].split(',') if video_dict['tags'] else []
-            video.filename = '%s.mp4' % video_id
+            video.filename = '%s.mpeg' % video_id
             video.download_url = video_dict['downloadUrl']
             return video
         except Exception:
