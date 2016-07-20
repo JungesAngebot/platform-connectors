@@ -212,6 +212,10 @@ class Inactive(object):
     def create_inactive_state(cls, registry_model):
         return cls(registry_model)
 
+    @classmethod
+    def create_deleted_state_with_overwritten_next_state(cls, registry_model, next_state):
+        return cls(registry_model, next_state)
+
 
 class Deleting(object):
     def __init__(self, registry_model):
