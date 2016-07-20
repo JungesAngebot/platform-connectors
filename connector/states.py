@@ -246,7 +246,6 @@ class Deleted(object):
     def run(self):
         try:
             self.registry_model.set_state_and_persist('deleted')
-
             self._cleanup()
         except Exception:
             registry_id = self.registry_model.registry_id
