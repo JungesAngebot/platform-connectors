@@ -46,9 +46,11 @@ class RegistryModel(object):
 
     def set_state_and_persist(self, state):
         self.status = state
+        self._persist()
 
     def set_intermediate_state_and_persist(self, state):
         self.intermediate_state = state
+        self._persist()
 
     def _persist(self):
         collection = MongoDbFactory.assets_collection()
