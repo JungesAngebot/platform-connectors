@@ -1,6 +1,6 @@
 from flask.ext.script import Manager
 
-from connector.handlers import create_app
+from connector.handler import create_app
 
 manager = Manager(create_app)
 
