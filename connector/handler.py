@@ -9,3 +9,16 @@ def create_app():
     return app
 
 
+@api.route('/update/<string:registry_id>')
+def update_request(registry_id):
+    pass
+
+
+@api.route('/unpublish/<string:registry_id>')
+def unpublish_request(registry_id):
+    pass
+
+
+@api.route('/delete/<string:registry_id>')
+def delete_request(registry_id):
+    pass
