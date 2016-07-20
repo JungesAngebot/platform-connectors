@@ -206,7 +206,7 @@ class Inactive(object):
 class Deleting(object):
     def __init__(self, registry_model):
         self.next_state = None
-        self.error_state = None
+        self.error_state = DeletingError()
         self.registry_model = registry_model
 
     def _fire_error(self):
