@@ -113,5 +113,6 @@ class VideoModel(object):
             video.filename = '%s.mpeg' % video_id
             video.download_url = video_dict['downloadUrl']
             return video
-        except Exception:
+        except Exception as e:
             log_error('Cannot retrieve video with id %s from asset collection.' % video_id)
+            raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
