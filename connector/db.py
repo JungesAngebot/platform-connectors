@@ -2,7 +2,7 @@ import os
 
 from pymongo import MongoClient
 
-from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB
+from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_REGISTRY, CONNECTOR_MAPPINGS, ASSET_DB, ASSETS
 
 
 class MongoDbFactory(object):
@@ -20,12 +20,12 @@ class MongoDbFactory(object):
 
 
 def connector_registry_collection():
-    pass
+    return MongoDbFactory.create_mongo_db_client_for_system('internal')[CONNECTOR_DB][CONNECTOR_REGISTRY]
 
 
 def connector_mappings_collection():
-    pass
+    return MongoDbFactory.create_mongo_db_client_for_system('internal')[CONNECTOR_DB][CONNECTOR_MAPPINGS]
 
 
 def assets_collection():
-    pass
+    return MongoDbFactory.create_mongo_db_client_for_system('external')[ASSET_DB][ASSETS]
