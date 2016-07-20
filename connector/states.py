@@ -204,6 +204,9 @@ class Deleting(object):
         self.error_state = None
         self.registry_model = registry_model
 
+    def _fire_error(self):
+        self.error_state.run()
+
     def run(self):
         try:
             pass
