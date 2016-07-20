@@ -1,7 +1,9 @@
 import unittest
 
+from connector.db import RegistryModel
 
-class RegistryModelMock(object):
+
+class RegistryModelMock(RegistryModel):
     pass
 
 
