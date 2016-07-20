@@ -219,7 +219,7 @@ class Deleting(object):
 
     def run(self):
         try:
-            pass
+            self.next_state.run()
         except Exception:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
