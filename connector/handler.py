@@ -3,7 +3,7 @@ from flask import Flask, jsonify
 
 from connector import api
 from connector.db import RegistryModel
-from connector.states import Downloading, Updating, Unpublish
+from connector.states import Downloading, Updating, Unpublish, Deleting
 
 
 def create_app():
@@ -42,6 +42,7 @@ def unpublish_request(registry_id):
 def delete_request(registry_id):
     try:
         registry_model = RegistryModel.create_from_registry_id(registry_id)
+        Deleting.create_deleting_state(registry_model).run()
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
