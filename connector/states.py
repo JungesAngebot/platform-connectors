@@ -88,3 +88,15 @@ class Active(object):
     @classmethod
     def create_active_state(cls, registry_model):
         return cls(registry_model)
+
+
+class Updating(object):
+    def __init__(self, registry_model):
+        self.registry_model = registry_model
+
+    def run(self):
+        pass
+
+    @classmethod
+    def create_updating_state(cls, registry_model):
+        return cls(registry_model)
