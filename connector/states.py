@@ -18,7 +18,7 @@ class Downloading:
         self.download_binary_from_kaltura_to_disk = urllib.request.urlretrieve
 
     def _next_state(self, video):
-        self.next_state().run(None)
+        self.next_state().run(video)
 
     def _download_binaries(self, download_url, filename):
         try:
