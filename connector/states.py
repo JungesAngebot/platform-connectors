@@ -27,6 +27,11 @@ class UpdatingError(object):
         pass
 
 
+class UnpublishError(object):
+    def run(self):
+        pass
+
+
 class Downloading(object):
     def __init__(self, registry_model):
         self.error_state = DownloadingError()
@@ -143,8 +148,14 @@ class Updating(object):
 class Unpublish(object):
     def __init__(self, registry_model):
         self.next_state = None
-        self.error_state = None
-        self.registry_model = None
+        self.error_state = UnpublishError()
+        self.registry_model = registry_model
+
+    def _fire_error(self):
+        self.error_state.run()
+
+    def run(self):
+        pass
 
     @classmethod
     def create_unpublish_state(cls, registry_model):
