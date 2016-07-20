@@ -160,6 +160,7 @@ class Unpublish(object):
             self.registry_model.set_intermediate_state_and_persist('unpublishing')
             video_model = VideoModel.create_from_video_id(self.registry_model.video_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'unpublish', video_model)
+            self.next_state.run()
         except Exception:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
