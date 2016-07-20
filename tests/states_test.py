@@ -65,8 +65,6 @@ class TestUploadMechanism(unittest.TestCase):
         download_state.download_binary_from_kaltura_to_disk = download_function_mock
         download_state.run()
 
-        self.assertEquals('active', registry_model_mock.final_state)
-
 
 class TestUpdateMechanism(unittest.TestCase):
     pass
