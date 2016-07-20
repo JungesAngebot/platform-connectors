@@ -22,6 +22,7 @@ def update_request(registry_id):
             Updating.create_updating_state(registry_model)
     except Exception as e:
         log_error(e)
+        return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})
 
 
