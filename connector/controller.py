@@ -18,7 +18,7 @@ def download_video(asset, registry_id):
     log_info('Going to download video %s.' % asset.download_url)
     try:
         urllib.request.urlretrieve(asset.download_url, asset.sourceId + '.mpeg')
-    except Exception as e:
+    except Exception:
         change_status_of_process(registry_id, 'error')
         log_error("Download of video %s from kaltura failed." % asset.sourceId)
 
