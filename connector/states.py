@@ -30,7 +30,7 @@ class Downloading(object):
     def run(self):
         try:
             self.registry_model.set_intermediate_state_and_persist('downloading')
-            video_model = VideoModel.create_from_video_id(self.registry_model['videoId'])
+            video_model = VideoModel.create_from_video_id(self.registry_model.video_id)
             self._download_binaries(video_model.download_url, video_model.filename)
             self._next_state(video_model)
         except Exception as e:

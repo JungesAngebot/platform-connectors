@@ -75,7 +75,7 @@ class RegistryModel(object):
     def create_from_registry_id(cls, registry_id):
         collection = MongoDbFactory.connector_registry_collection()
         try:
-            registry_obj = collection.find_one({'_id': ObjectId(registry_id)})
+            registry_obj = collection.find_one({'_id': registry_id})
             obj = cls()
             obj.registry_id = registry_id
             obj.video_id = registry_obj['videoId']
