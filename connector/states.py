@@ -205,7 +205,12 @@ class Deleting(object):
         self.registry_model = registry_model
 
     def run(self):
-        pass
+        try:
+            pass
+        except Exception:
+            registry_id = self.registry_model.registry_id
+            video_id = self.registry_model.video_id
+            log_error('Cannot delete video with id %s and registry id %s.' % (video_id, registry_id))
 
     @classmethod
     def create_deleting_state(cls, registry_model):
