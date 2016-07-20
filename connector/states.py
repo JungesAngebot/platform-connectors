@@ -138,3 +138,14 @@ class Updating(object):
     @classmethod
     def create_updating_state(cls, registry_model):
         return cls(registry_model)
+
+
+class Unpublish(object):
+    def __init__(self, registry_model):
+        self.next_state = None
+        self.error_state = None
+        self.registry_model = None
+
+    @classmethod
+    def create_unpublish_state(cls, registry_model):
+        return cls(registry_model)
