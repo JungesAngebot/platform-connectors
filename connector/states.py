@@ -23,8 +23,9 @@ class Downloading:
     def _download_binaries(self, download_url, filename):
         try:
             self.download_binary_from_kaltura_to_disk(download_url, filename)
-        except OSError:
-            pass
+        except OSError as e:
+            log_error('Cannot download binary with url %s.' % download_url)
+            raise Exception('Cannot download binary with url %s.' % download_url) from e
 
     def run(self):
         try:
