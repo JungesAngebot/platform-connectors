@@ -219,6 +219,7 @@ class Deleting(object):
 
     def run(self):
         try:
+            self.registry_model.set_intermediate_state_and_persist('deleting')
             self.next_state.run()
         except Exception:
             registry_id = self.registry_model.registry_id
