@@ -56,6 +56,7 @@ class Uploading(object):
         self.error_state = UploadingError()
         self.interaction = PlatformInteraction()
         self.registry_model = registry_model
+        self.next_state = None
 
     def _fire_error(self):
         self.error_state.run()
@@ -70,4 +71,16 @@ class Uploading(object):
 
     @classmethod
     def create_uploading_state(cls, registry_model):
+        return cls(registry_model)
+
+
+class Active(object):
+    def __init__(self, registry_model):
+        self.registry_model = registry_model
+
+    def run(self):
+        pass
+
+    @classmethod
+    def create_active_state(cls, registry_model):
         return cls(registry_model)
