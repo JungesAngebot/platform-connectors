@@ -3,7 +3,7 @@ import urllib.request
 
 from commonspy.logging import log_error
 
-from connector.db import VideoModel
+from connector.db import VideoModel, RegistryModel
 from connector.platforms import PlatformInteraction
 
 
@@ -68,9 +68,11 @@ class Downloading(object):
     def run(self):
         try:
             self.registry_model.set_intermediate_state_and_persist('downloading')
+            self.registry_model = RegistryModel.create_from_registry_id(self.registry_model.registry_id)
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self._download_binaries(video_model.download_url, video_model.filename)
             self.registry_model.update_video_hash_code(video_model.hash_code)
+            self.registry_model = RegistryModel.create_from_registry_id(self.registry_model.registry_id)
             self._next_state(video_model)
         except Exception as e:
             log_error('Cannot finish download of binary from kaltura. %s' % str(e))
@@ -97,6 +99,7 @@ class Uploading(object):
     def run(self, video):
         try:
             self.registry_model.set_intermediate_state_and_persist('uploading')
+            self.registry_model = RegistryModel.create_from_registry_id(self.registry_model.registry_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video)
             self.next_state.run()
         except Exception:
