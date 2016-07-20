@@ -38,4 +38,9 @@ def unpublish_request(registry_id):
 
 @api.route('/delete/<string:registry_id>')
 def delete_request(registry_id):
-    pass
+    try:
+        pass
+    except Exception as e:
+        log_error(e)
+        return jsonify({'status': 'error'})
+    return jsonify({'status': 'success'})
