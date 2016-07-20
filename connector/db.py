@@ -38,6 +38,7 @@ class RegistryModel(object):
         self.video_id = None
         self.category_id = None
         self.status = None
+        self.intermediate_state = None
         self.message = None
         self.target_platform = None
         self.target_platform_video_id = None
@@ -58,5 +59,5 @@ class RegistryModel(object):
             obj.target_platform_video_id = registry_obj['targetPlatformVideoId']
             obj.mapping_id = registry_obj['mappingId']
             return obj
-        except Exception as e:
+        except Exception:
             log_error('Cannot create registry model for registry id %s.' % registry_id)
