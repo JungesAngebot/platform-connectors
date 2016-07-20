@@ -18,6 +18,8 @@ def update_request(registry_id):
         registry_model = RegistryModel.create_from_registry_id(registry_id)
         if registry_model.status == 'notified':
             Downloading.create_downloading_state(registry_model).run()
+        elif registry_model.status == 'active':
+            pass  # TODO - Update request here
     except Exception as e:
         log_error(e)
     return jsonify({'status': 'success'})
