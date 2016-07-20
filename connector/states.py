@@ -1,3 +1,4 @@
+import os
 import urllib.request
 
 from commonspy.logging import log_error
@@ -80,9 +81,15 @@ class Active(object):
     def __init__(self, registry_model):
         self.registry_model = registry_model
 
+    def _cleanup(self):
+        self.registry_model.set_intermediate_state_and_persist('')
+        if os.path.isfile('%s.mpeg' % self.registry_model.video_id):
+            os.remove('%s.mpeg' % self.registry_model.video_id)
+
     def run(self):
         try:
             self.registry_model.set_state_and_persist('active')
+            self._cleanup()
         except Exception as e:
             raise Exception('Cannot set state to active.') from e
 
