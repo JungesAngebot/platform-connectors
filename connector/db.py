@@ -1,7 +1,6 @@
 import os
 
 from bson import ObjectId
-from commonspy.logging import log_error
 from pymongo import MongoClient
 
 from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_REGISTRY, CONNECTOR_MAPPINGS, ASSET_DB, ASSETS
@@ -57,7 +56,6 @@ class RegistryModel(object):
         try:
             collection.save(self._to_dict())
         except Exception as e:
-            log_error('Cannot update state of registry item with id %s.' % self.registry_id)
             raise Exception('Cannot update state of registry item with id %s.' % self.registry_id) from e
 
     def _to_dict(self):
@@ -89,7 +87,6 @@ class RegistryModel(object):
             obj.mapping_id = registry_obj['mappingId']
             return obj
         except Exception as e:
-            log_error('Cannot create registry model for registry id %s.' % registry_id)
             raise Exception('Cannot create registry model for registry id %s.' % registry_id) from e
 
 
@@ -116,5 +113,4 @@ class VideoModel(object):
             video.image_id = video_dict['image_id'] if 'image_id' in video_dict else None
             return video
         except Exception as e:
-            log_error('Cannot retrieve video with id %s from asset collection.' % video_id)
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
