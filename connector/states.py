@@ -19,6 +19,7 @@ class Downloading:
     def run(self):
         registry_model = RegistryModel.create_from_registry_id(self.registry_id)
 
+
     def on_error(self):
         self.error_state().run()
 

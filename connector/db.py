@@ -61,3 +61,27 @@ class RegistryModel(object):
             return obj
         except Exception:
             log_error('Cannot create registry model for registry id %s.' % registry_id)
+
+
+class VideoModel(object):
+    def __init__(self):
+        self.title = None
+        self.description = None
+        self.keywords = None
+        self.filename = None
+        self.download_url = None
+
+    @classmethod
+    def create_from_video_id(cls, video_id):
+        collection = MongoDbFactory.assets_collection()
+        try:
+            video_dict = collection.find_one({'sourceId': video_id})
+            video = cls()
+            video.title = video_dict['name']
+            video.description = video_dict['text']
+            video.keywords = video_dict['tags'].split(',') if video_dict['tags'] else []
+            video.filename = '%s.mp4' % video_id
+            video.download_url = video_dict['downloadUrl']
+            return video
+        except Exception:
+            log_error('Cannot retrieve video with id %s from asset collection.' % video_id)
