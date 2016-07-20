@@ -25,7 +25,7 @@ class RegistryModelMock(RegistryModel):
         obj.category_id = 'categoryId'
         obj.status = 'notified'
         obj.message = 'message'
-        obj.target_platform = 'targetPlatform'
+        obj.target_platform = 'facebook'
         obj.target_platform_video_id = 'targetPlatformVideoId'
         obj.mapping_id = 'mappingId'
         return obj
@@ -53,10 +53,17 @@ class VideoModelMock(VideoModel):
         return video
 
 
+def download_function_mock(download_url, filename):
+    pass
+
+
 class TestUploadMechanism(unittest.TestCase):
     def test_upload_video_notified_state(self):
         registry_model_mock = RegistryModelMock()
-        Downloading.create_downloading_state(registry_model_mock).run()
+        download_state = Downloading.create_downloading_state(registry_model_mock)
+        download_state.video_model_class = VideoModelMock
+        download_state.download_binary_from_kaltura_to_disk = download_function_mock
+        download_state.run()
 
         self.assertEquals('active', registry_model_mock.final_state)
 
