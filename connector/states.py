@@ -93,10 +93,13 @@ class Active(object):
 class Updating(object):
     def __init__(self, registry_model):
         self.registry_model = registry_model
+        self.interaction = PlatformInteraction()
 
     def run(self):
         try:
             self.registry_model.set_intermediate_state_and_persist('updating')
+            video_model = VideoModel.create_from_video_id(self.registry_model.video_id)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model)
         except Exception as e:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
