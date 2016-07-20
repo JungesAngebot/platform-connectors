@@ -43,9 +43,6 @@ class RegistryModel(object):
         self.target_platform_video_id = None
         self.mapping_id = None
 
-    def current_state_of_video(self):
-        pass
-
     @classmethod
     def create_from_registry_id(cls, registry_id):
         collection = MongoDbFactory.connector_registry_collection()
