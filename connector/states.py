@@ -5,9 +5,10 @@ class DownloadingError:
 
 class Downloading:
 
-    def __init__(self):
+    def __init__(self, registry_id):
         self.error_state = DownloadingError
         self.next_state = Uploading
+        self.registry_id = registry_id
 
     def _next_state(self, video):
         self.next_state().run(None)
@@ -17,6 +18,10 @@ class Downloading:
 
     def on_error(self):
         self.error_state().run()
+
+    @classmethod
+    def create_downloading_state(cls, registry_id):
+        return cls(registry_id)
 
 
 class Uploading:
