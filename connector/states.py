@@ -147,9 +147,9 @@ class Updating(object):
 
 class Unpublish(object):
     def __init__(self, registry_model):
-        self.next_state = None
         self.error_state = UnpublishError()
         self.registry_model = registry_model
+        self.next_state = Inactive.create_inactive_state(self.registry_model)
         self.interaction = PlatformInteraction()
 
     def _fire_error(self):
