@@ -51,7 +51,7 @@ class RegistryModel(object):
         self._persist()
 
     def _persist(self):
-        collection = MongoDbFactory.assets_collection()
+        collection = MongoDbFactory.connector_registry_collection()
         try:
             collection.save(self._to_dict())
         except Exception as e:
