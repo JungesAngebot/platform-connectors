@@ -224,3 +224,17 @@ class Deleting(object):
     @classmethod
     def create_deleting_state(cls, registry_model):
         return cls(registry_model)
+
+
+class Deleted(object):
+
+    def __init__(self):
+        self.registry_model = None
+        self.error_state = None
+
+    def run(self):
+        pass
+
+    @classmethod
+    def create_deleted_state(cls, registry_model):
+        return cls(registry_model)
