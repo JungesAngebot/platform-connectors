@@ -2,7 +2,7 @@ import urllib.request
 
 from commonspy.logging import log_error
 
-from connector.db import RegistryModel, VideoModel
+from connector.db import VideoModel
 from connector.platforms import PlatformInteraction
 
 
@@ -11,9 +11,14 @@ class DownloadingError(object):
         pass
 
 
+class UploadingError(object):
+    def run(self):
+        pass
+
+
 class Downloading(object):
     def __init__(self, registry_model):
-        self.error_state = DownloadingError
+        self.error_state = DownloadingError()
         self.next_state = Uploading.create_uploading_state(registry_model)
         self.registry_model = registry_model
         self.download_binary_from_kaltura_to_disk = urllib.request.urlretrieve
@@ -39,7 +44,7 @@ class Downloading(object):
             self.fire_error()
 
     def fire_error(self):
-        self.error_state().run()
+        self.error_state.run()
 
     @classmethod
     def create_downloading_state(cls, registry_model):
@@ -48,12 +53,20 @@ class Downloading(object):
 
 class Uploading(object):
     def __init__(self, registry_model):
+        self.error_state = UploadingError()
         self.interaction = PlatformInteraction()
         self.registry_model = registry_model
 
+    def _fire_error(self):
+        self.error_state.run()
+
     def run(self, video):
-        self.registry_model.set_intermediate_state_and_persist('uploading')
-        self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video)
+        try:
+            self.registry_model.set_intermediate_state_and_persist('uploading')
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video)
+        except Exception as e:
+            raise Exception(
+                'Cannot perform target platform upload of video with id %s and registry id %s.' % (self.registry_model.registry_id, self.registry_model.video_id)) from e
 
     @classmethod
     def create_uploading_state(cls, registry_model):
