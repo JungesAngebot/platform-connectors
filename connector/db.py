@@ -6,7 +6,6 @@ from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_R
 
 
 class MongoDbFactory(object):
-
     @staticmethod
     def _mongo_connection_url(system):
         if system == 'internal':
@@ -14,18 +13,18 @@ class MongoDbFactory(object):
         return ASSET_MONGO_DB if 'ASSET_MONGO_DB' not in os.environ else os.environ['ASSET_MONGO_DB']
 
     @staticmethod
-    def create_mongo_db_client_for_system(system):
+    def _create_mongo_db_client_for_system(system):
         url = MongoDbFactory._mongo_connection_url(system)
         return MongoClient(url)
 
+    @staticmethod
+    def connector_registry_collection():
+        return MongoDbFactory._create_mongo_db_client_for_system('internal')[CONNECTOR_DB][CONNECTOR_REGISTRY]
 
-def connector_registry_collection():
-    return MongoDbFactory.create_mongo_db_client_for_system('internal')[CONNECTOR_DB][CONNECTOR_REGISTRY]
+    @staticmethod
+    def connector_mappings_collection():
+        return MongoDbFactory._create_mongo_db_client_for_system('internal')[CONNECTOR_DB][CONNECTOR_MAPPINGS]
 
-
-def connector_mappings_collection():
-    return MongoDbFactory.create_mongo_db_client_for_system('internal')[CONNECTOR_DB][CONNECTOR_MAPPINGS]
-
-
-def assets_collection():
-    return MongoDbFactory.create_mongo_db_client_for_system('external')[ASSET_DB][ASSETS]
+    @staticmethod
+    def assets_collection():
+        return MongoDbFactory._create_mongo_db_client_for_system('external')[ASSET_DB][ASSETS]
