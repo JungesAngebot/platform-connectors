@@ -95,7 +95,12 @@ class Updating(object):
         self.registry_model = registry_model
 
     def run(self):
-        pass
+        try:
+            pass
+        except Exception as e:
+            registry_id = self.registry_model.registry_id
+            video_id = self.registry_model.video_id
+            raise Exception('Unable to update video with id %s and registry id %s.' % (video_id, registry_id)) from e
 
     @classmethod
     def create_updating_state(cls, registry_model):
