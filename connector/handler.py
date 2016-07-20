@@ -34,8 +34,6 @@ def unpublish_request(registry_id):
         registry_model = RegistryModel.create_from_registry_id(registry_id)
         if registry_model.status == 'active':
             Unpublish.create_unpublish_state(registry_model).run()
-        elif registry_model.status == 'inactive':
-            Deleting.create_deleting_state(registry_model).run()
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
