@@ -32,6 +32,7 @@ class Downloading:
             registry_model = RegistryModel.create_from_registry_id(self.registry_id)
             video_model = VideoModel.create_from_video_id(registry_model['videoId'])
             self._download_binaries(video_model.download_url, video_model.filename)
+            self._next_state(video_model)
         except Exception as e:
             log_error('Cannot finish download of binary from kaltura. %s' % str(e))
             self.fire_error()
