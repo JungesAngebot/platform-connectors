@@ -20,7 +20,7 @@ def download_video(asset, registry_id):
         urllib.request.urlretrieve(asset.download_url, asset.sourceId + '.mpeg')
     except Exception as e:
         change_status_of_process(registry_id, 'error')
-        log_error("Download of video %s from kaltura failed." % asset.sourceId, e)
+        log_error("Download of video %s from kaltura failed." % asset.sourceId)
 
 
 def upload_video(registry_id):
@@ -38,7 +38,7 @@ def upload_video(registry_id):
         if 'youtube' == registry['targetPlatform']:
             upload_video_to_youtube(asset)
         elif 'facebook' == registry['targetPlatform']:
-            upload_video_to_facebook(asset)
+            upload_video_to_facebook(asset, None)
 
 
 """
