@@ -134,10 +134,10 @@ class Active(object):
 
 
 class Updating(object):
-    def __init__(self, registry_model):
+    def __init__(self, registry_model, next_state=None):
         self.registry_model = registry_model
         self.interaction = PlatformInteraction()
-        self.next_state = Active.create_active_state(self.registry_model)
+        self.next_state = Active.create_active_state(self.registry_model) if next_state is None else next_state
         self.error_state = UpdatingError()
 
     def _fire_error(self):
