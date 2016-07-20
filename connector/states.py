@@ -241,11 +241,13 @@ class Deleted(object):
         self.error_state.run()
 
     def _cleanup(self):
-        pass
+        self.registry_model.set_intermediate_state_and_persist('')
 
     def run(self):
         try:
             self.registry_model.set_state_and_persist('deleted')
+
+            self._cleanup()
         except Exception:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
