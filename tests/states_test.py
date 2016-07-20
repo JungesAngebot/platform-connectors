@@ -1,6 +1,10 @@
 import unittest
 
 
+class RegistryModelMock(object):
+    pass
+
+
 class TestUploadMechanism(unittest.TestCase):
     pass
 
