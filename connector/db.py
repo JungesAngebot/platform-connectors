@@ -54,7 +54,11 @@ class RegistryModel(object):
 
     def _persist(self):
         collection = MongoDbFactory.assets_collection()
-        collection.save(self._to_dict())
+        try:
+            collection.save(self._to_dict())
+        except Exception as e:
+            log_error('Cannot update state of registry item with id %s.' % self.registry_id)
+            raise Exception('Cannot update state of registry item with id %s.' % self.registry_id) from e
 
     def _to_dict(self):
         return dict(
