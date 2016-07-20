@@ -21,6 +21,7 @@ class RegistryModelMock(RegistryModel):
         obj.mapping_id = 'mappingId'
         return obj
 
+
 class TestUploadMechanism(unittest.TestCase):
     pass
 
