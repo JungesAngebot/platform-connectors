@@ -106,7 +106,7 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals([], model.keywords)
         self.assertEquals('id.mpeg', model.filename)
         self.assertEquals('some_id', model.image_id)
-        self.assertEquals('fd447058ca5b7cf49fcec33f3476703e', model.hash_code)
+        self.assertEquals('b57748cc5a3ab4c96d0fd1c48fc29d2b', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_without_image_id(self):
@@ -121,7 +121,7 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals([], model.keywords)
         self.assertEquals('id.mpeg', model.filename)
         self.assertEquals(None, model.image_id)
-        self.assertEquals('c8b5d3de41ac85dc57bfede16b147d25', model.hash_code)
+        self.assertEquals('b57748cc5a3ab4c96d0fd1c48fc29d2b', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_without_a_title(self):
@@ -136,7 +136,7 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals([], model.keywords)
         self.assertEquals('id.mpeg', model.filename)
         self.assertEquals('image_id', model.image_id)
-        self.assertEquals('15c4643f041b0098c90ca9e7cabd3bb0', model.hash_code)
+        self.assertEquals('78752fb9f104b8032aac17972cab162a', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_without_a_description(self):
@@ -151,7 +151,7 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals([], model.keywords)
         self.assertEquals('id.mpeg', model.filename)
         self.assertEquals('image_id', model.image_id)
-        self.assertEquals('e46a220b84fe357e381b0799aac47226', model.hash_code)
+        self.assertEquals('fdee39e2aa77eebea0cddd5059768b1f', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_without_tags(self):
@@ -166,7 +166,7 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals([], model.keywords)
         self.assertEquals('id.mpeg', model.filename)
         self.assertEquals('image_id', model.image_id)
-        self.assertEquals('7b0874a50d48c45ab258534142bd182c', model.hash_code)
+        self.assertEquals('ed41d5874abc1b0e09ca987627c1a218', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_with_tags(self):
