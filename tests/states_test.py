@@ -6,7 +6,6 @@ from connector.states import Downloading
 
 
 class RegistryModelMock(RegistryModel):
-
     def __init__(self):
         super().__init__()
         self.final_state = None
@@ -32,7 +31,6 @@ class RegistryModelMock(RegistryModel):
 
 
 class VideoModelMock(VideoModel):
-
     @classmethod
     def create_from_video_id(cls, video_id):
         video = cls()
@@ -100,6 +98,7 @@ class TestUploadMechanism(unittest.TestCase):
         download_state.run()
 
         self.assertEquals('active', registry_model_mock.final_state)
+
 
 class TestUpdateMechanism(unittest.TestCase):
     pass
