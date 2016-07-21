@@ -4,7 +4,6 @@ from connector.db import MongoDbFactory, VideoModel
 
 
 class CollectionMock(object):
-
     def find_one(self, query):
         return dict(
             name='videoName',
@@ -26,7 +25,6 @@ class CollectionMockWithoutImageId(object):
 
 
 class CollectionMockWithoutVideoTitle(object):
-
     def find_one(self, query):
         return dict(
             text='videoText',
@@ -47,7 +45,6 @@ class CollectionMockWithoutDescription(object):
 
 
 class DbFactoryMock(MongoDbFactory):
-
     mock_to_use = CollectionMock
 
     @staticmethod
@@ -113,7 +110,6 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals('image_id', model.image_id)
         self.assertEquals('e46a220b84fe357e381b0799aac47226', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
-
 
     def test_video_without_tags(self):
         pass
