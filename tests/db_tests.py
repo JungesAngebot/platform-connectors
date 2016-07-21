@@ -123,17 +123,17 @@ class VideoModelTest(unittest.TestCase):
 
     def test_video_without_tags(self):
         factory_mock = DbFactoryMock
-        factory_mock.mock_to_use = CollectionMockWithoutDescription
+        factory_mock.mock_to_use = CollectionMockWithoutTags
         VideoModel.db_factory = factory_mock
 
         model = VideoModel.create_from_video_id('id')
 
         self.assertEquals('videoTitle', model.title)
-        self.assertEquals('', model.description)
+        self.assertEquals('videoDescription', model.description)
         self.assertEquals([], model.keywords)
         self.assertEquals('id.mpeg', model.filename)
         self.assertEquals('image_id', model.image_id)
-        self.assertEquals('e46a220b84fe357e381b0799aac47226', model.hash_code)
+        self.assertEquals('7b0874a50d48c45ab258534142bd182c', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_filename(self):
