@@ -54,6 +54,17 @@ class CollectionMockWithoutTags(object):
         )
 
 
+class CollectionMockWithTags(object):
+    def find_one(self, query):
+        return dict(
+            name='videoTitle',
+            text='videoDescription',
+            tags='tag1,tag2,tag3',
+            downloadUrl='downloadUrl',
+            image_id='image_id'
+        )
+
+
 class DbFactoryMock(MongoDbFactory):
     mock_to_use = CollectionMock
 
