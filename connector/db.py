@@ -4,7 +4,8 @@ from bson import ObjectId
 from commonspy.logging import log_error
 from pymongo import MongoClient
 
-from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_REGISTRY, CONNECTOR_MAPPINGS, ASSET_DB, ASSETS
+from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_REGISTRY, CONNECTOR_MAPPINGS, ASSET_DB, \
+    ASSETS
 
 
 class MongoDbFactory(object):
@@ -118,3 +119,25 @@ class VideoModel(object):
         except Exception as e:
             log_error('Cannot retrieve video with id %s from asset collection.' % video_id)
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
+
+
+class MappingModel(object):
+    def __init__(self):
+        self._id = None
+        self.target_id = None
+        self.target_platform = None
+        self.category_id = None
+
+    @classmethod
+    def create_from_mapping_id(cls, mapping_id):
+        collection = MongoDbFactory.connector_mappings_collection()
+        try:
+            mapping_dict = collection.find_one({'_id': ObjectId(mapping_id)})
+            mapping = cls()
+            mapping.target_id = mapping_dict['target_id']
+            mapping.target_platform = mapping_dict['target_platform']
+            mapping.category_id = mapping_dict['category_id']
+            return mapping
+        except Exception as e:
+            log_error('Cannot retrieve mapping with id %s from mapping collection.' % mapping_id)
+            raise Exception('Cannot retrieve video with id %s from asset collection.' % mapping_id) from e
