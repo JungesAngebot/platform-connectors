@@ -20,6 +20,7 @@ def upload_video_to_facebook(video: VideoModel, registry: RegistryModel):
     files = {
         'thumb': open("/home/swrlnxdef/Downloads/est02.png", 'rb'),
     }
+
     try:
         result = requests.post(url, data=body, files=files)
         if result.status_code == 200:
