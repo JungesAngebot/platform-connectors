@@ -9,7 +9,7 @@ from connector.platforms import PlatformInteraction
 
 class Error(object):
     def __init__(self, registry_model):
-        pass
+        self.registry_model = registry_model
 
     def run(self):
         try:
@@ -19,7 +19,7 @@ class Error(object):
 
     @classmethod
     def create_error_state(cls, registry_model):
-        pass
+        return cls(registry_model)
 
 
 class Downloading(object):
