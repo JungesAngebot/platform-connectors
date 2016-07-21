@@ -144,8 +144,11 @@ class VideoModel(object):
 def persist_video_image_on_disk(cls, video_model):
     image_id = video_model.image_id
     database = MongoDbFactory.einszwo_internal_database()
-    fs = GridFS(database)
-    result = fs.get(image_id)
-    with open(video_model.image_filename, 'wb') as file:
-        file.write(result.read())
-
+    try:
+        fs = GridFS(database)
+        result = fs.get(image_id)
+        with open(video_model.image_filename, 'wb') as file:
+            file.write(result.read())
+    except Exception as e:
+        video_id = video_model.video_id
+        raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (image_id, video_id)) from e
