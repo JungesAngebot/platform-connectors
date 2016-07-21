@@ -1,6 +1,7 @@
 import hashlib
 import os
 
+from gridfs import GridFS
 from pymongo import MongoClient
 
 from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_REGISTRY, CONNECTOR_MAPPINGS, ASSET_DB, ASSETS
@@ -139,32 +140,12 @@ class VideoModel(object):
         except Exception as e:
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
 
-"""
-#!/usr/bin/env python3
-import json
 
-from gridfs import GridFS
-from pymongo import MongoClient
+def persist_video_image_on_disk(cls, video_model):
+    image_id = video_model.image_id
+    database = MongoDbFactory.einszwo_internal_database()
+    fs = GridFS(database)
+    result = fs.get(image_id)
+    with open(video_model.image_filename, 'wb') as file:
+        file.write(result.read())
 
-from connector import APP_ROOT
-
-with open(APP_ROOT + '/config/connector.json') as file:
-    config = json.loads(file.read())
-
-mongo_url = config['source']['mongodb']
-mongo_db = config['source']['database']
-
-client = MongoClient(mongo_url)
-
-database = client[mongo_db]
-
-fs = GridFS(database)
-
-result = fs.get('fc7d8c1f555fac64ea99f77909a377d3')
-
-file = open('test.png', 'wb')
-file.write(result.read())
-
-"""
-class Image(object):
-    pass
