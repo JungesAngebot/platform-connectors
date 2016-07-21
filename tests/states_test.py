@@ -68,6 +68,17 @@ class TestUploadMechanism(unittest.TestCase):
 
         self.assertEquals('active', registry_model_mock.final_state)
 
+    def test_upload_video_active_state(self):
+        registry_model_mock = RegistryModelMock.create_from_registry_id('some_id')
+        registry_model_mock.status = 'active'
+        download_state = Downloading.create_downloading_state(registry_model_mock)
+        download_state.video_model_class = VideoModelMock
+        download_state.download_binary_from_kaltura_to_disk = download_function_mock
+
+        download_state.run()
+
+        self.assertEquals('active', registry_model_mock.final_state)
+
 
 class TestUpdateMechanism(unittest.TestCase):
     pass
