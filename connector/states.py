@@ -3,7 +3,7 @@ import urllib.request
 
 from commonspy.logging import log_error
 
-from connector.db import VideoModel, RegistryModel
+from connector.db import VideoModel
 from connector.platforms import PlatformInteraction
 
 
