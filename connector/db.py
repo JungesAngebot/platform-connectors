@@ -121,20 +121,18 @@ class VideoModel(object):
         try:
             video_dict = collection.find_one({'sourceId': video_id})
             video = cls()
-            video.title = video_dict['name']
-            video.description = video_dict['text']
-            video.keywords = video_dict['tags'].split(',') if video_dict['tags'] else []
+            video.title = video_dict['name'] if 'name' in video_dict else ''
+            video.description = video_dict['text'] if 'text' in video_dict else ''
+            video.keywords = video_dict['tags'].split(',') if 'tags' in video_dict and video_dict['tags'] else []
+            video.keywords = [keyword.strip() for keyword in video.keywords]
             video.filename = '%s.mpeg' % video_id
             video.image_filename = '%s.png' % video_id
             video.download_url = video_dict['downloadUrl']
-            video.image_id = video_dict['image_id'] if 'image_id' in video_dict else None
+            video.image_id = video_dict['imageid'] if 'imageid' in video_dict else None
             video_hash_code = hashlib.md5()
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
             video_hash_code.update(bytes(video.description.encode('UTF-8')))
             video_hash_code.update(bytes(str(video.keywords).encode('UTF-8')))
-            video_hash_code.update(bytes(video.filename.encode('UTF-8')))
-            video_hash_code.update(bytes(video.download_url.encode('UTF-8')))
-            video_hash_code.update(bytes(video.image_id.encode('UTF-8')) if video.image_id is not None else "".encode('UTF-8'))
             video.hash_code = video_hash_code.hexdigest()
             return video
         except Exception as e:

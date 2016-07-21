@@ -22,6 +22,11 @@ def update_request(registry_id):
             Updating.create_updating_state(registry_model).run()
         elif registry_model.status == 'inactive':
             Active.create_active_state(registry_model).run()
+        elif registry_model.status == 'error':
+            if registry_model.intermediate_state == 'downloading' or registry_model.intermediate_state == 'uploading':
+                Downloading.create_downloading_state(registry_model).run()
+            elif registry_model.intermediate_state == 'updating':
+                Updating.create_updating_state(registry_model).run()
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
@@ -32,7 +37,7 @@ def update_request(registry_id):
 def unpublish_request(registry_id):
     try:
         registry_model = RegistryModel.create_from_registry_id(registry_id)
-        if registry_model.status == 'active':
+        if registry_model.status == 'active' or registry_model.status == 'error':
             Unpublish.create_unpublish_state(registry_model).run()
     except Exception as e:
         log_error(e)

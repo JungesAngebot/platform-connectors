@@ -7,49 +7,24 @@ from connector.db import VideoModel
 from connector.platforms import PlatformInteraction
 
 
-class DownloadingError(object):
+class Error(object):
+    def __init__(self, registry_model):
+        self.registry_model = registry_model
+
     def run(self):
-        pass
+        try:
+            self.registry_model.set_state_and_persist('error')
+        except Exception:
+            log_error('Error while processing video.')
 
-
-class UploadingError(object):
-    def run(self):
-        pass
-
-
-class ActiveError(object):
-    def run(self):
-        pass
-
-
-class UpdatingError(object):
-    def run(self):
-        pass
-
-
-class UnpublishError(object):
-    def run(self):
-        pass
-
-
-class DeletingError(object):
-    def run(self):
-        pass
-
-
-class DeletedError(object):
-    def run(self):
-        pass
-
-
-class InactiveError(object):
-    def run(self):
-        pass
+    @classmethod
+    def create_error_state(cls, registry_model):
+        return cls(registry_model)
 
 
 class Downloading(object):
     def __init__(self, registry_model):
-        self.error_state = DownloadingError()
+        self.error_state = Error.create_error_state(registry_model)
         self.next_state = Uploading.create_uploading_state(registry_model)
         self.registry_model = registry_model
         self.download_binary_from_kaltura_to_disk = urllib.request.urlretrieve
@@ -86,7 +61,7 @@ class Downloading(object):
 
 class Uploading(object):
     def __init__(self, registry_model):
-        self.error_state = UploadingError()
+        self.error_state = Error.create_error_state(registry_model)
         self.interaction = PlatformInteraction()
         self.registry_model = registry_model
         self.next_state = Active.create_active_state(self.registry_model)
@@ -97,7 +72,7 @@ class Uploading(object):
     def run(self, video):
         try:
             self.registry_model.set_intermediate_state_and_persist('uploading')
-            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video, self.registry_model)
             self.next_state.run()
         except Exception:
             log_error('Cannot perform target platform upload of video with id %s and registry id %s.' % (self.registry_model.registry_id, self.registry_model.video_id))
@@ -111,7 +86,7 @@ class Uploading(object):
 class Active(object):
     def __init__(self, registry_model):
         self.registry_model = registry_model
-        self.error_state = ActiveError()
+        self.error_state = Error.create_error_state(registry_model)
 
     def _cleanup(self):
         self.registry_model.set_intermediate_state_and_persist('')
@@ -139,7 +114,8 @@ class Updating(object):
         self.registry_model = registry_model
         self.interaction = PlatformInteraction()
         self.next_state = Active.create_active_state(self.registry_model)
-        self.error_state = UpdatingError()
+        self.error_state = Error.create_error_state(registry_model)
+        self.video_model_class = VideoModel
 
     def _fire_error(self):
         self.error_state.run()
@@ -147,8 +123,8 @@ class Updating(object):
     def run(self):
         try:
             self.registry_model.set_intermediate_state_and_persist('updating')
-            video_model = VideoModel.create_from_video_id(self.registry_model.video_id)
-            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model)
+            video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model, self.registry_model)
             self.next_state.run()
         except Exception as e:
             registry_id = self.registry_model.registry_id
@@ -163,10 +139,11 @@ class Updating(object):
 
 class Unpublish(object):
     def __init__(self, registry_model):
-        self.error_state = UnpublishError()
         self.registry_model = registry_model
+        self.error_state = Error.create_error_state(registry_model)
         self.next_state = Inactive.create_inactive_state(self.registry_model)
         self.interaction = PlatformInteraction()
+        self.video_model_class = VideoModel
 
     def _fire_error(self):
         self.error_state.run()
@@ -174,8 +151,8 @@ class Unpublish(object):
     def run(self):
         try:
             self.registry_model.set_intermediate_state_and_persist('unpublishing')
-            video_model = VideoModel.create_from_video_id(self.registry_model.video_id)
-            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'unpublish', video_model)
+            video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'unpublish', video_model, self.registry_model)
             self.next_state.run()
         except Exception:
             registry_id = self.registry_model.registry_id
@@ -190,7 +167,7 @@ class Unpublish(object):
 
 class Inactive(object):
     def __init__(self, registry_model):
-        self.error_state = InactiveError()
+        self.error_state = Error.create_error_state(registry_model)
         self.registry_model = registry_model
 
     def _fire_error(self):
@@ -217,9 +194,10 @@ class Inactive(object):
 class Deleting(object):
     def __init__(self, registry_model):
         self.next_state = Deleted.create_deleted_state(registry_model)
-        self.error_state = DeletingError()
+        self.error_state = Error.create_error_state(registry_model)
         self.interaction = PlatformInteraction()
         self.registry_model = registry_model
+        self.video_model_class = VideoModel
 
     def _fire_error(self):
         self.error_state.run()
@@ -227,8 +205,8 @@ class Deleting(object):
     def run(self):
         try:
             self.registry_model.set_intermediate_state_and_persist('deleting')
-            video_model = VideoModel.create_from_video_id(self.registry_model.video_id)
-            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'delete', video_model)
+            video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'delete', video_model, self.registry_model)
             self.next_state.run()
         except Exception:
             registry_id = self.registry_model.registry_id
@@ -244,7 +222,7 @@ class Deleting(object):
 class Deleted(object):
     def __init__(self, registry_model):
         self.registry_model = registry_model
-        self.error_state = DeletedError()
+        self.error_state = Error.create_error_state(registry_model)
 
     def _fire_error(self):
         self.error_state.run()

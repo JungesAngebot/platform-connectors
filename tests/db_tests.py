@@ -4,14 +4,13 @@ from connector.db import MongoDbFactory, VideoModel
 
 
 class CollectionMock(object):
-
     def find_one(self, query):
         return dict(
             name='videoName',
             text='videoText',
             tags=[],
             downloadUrl='downloadUrl',
-            image_id='some_id'
+            imageid='some_id'
         )
 
 
@@ -25,8 +24,70 @@ class CollectionMockWithoutImageId(object):
         )
 
 
-class DbFactoryMock(MongoDbFactory):
+class CollectionMockWithoutVideoTitle(object):
+    def find_one(self, query):
+        return dict(
+            text='videoText',
+            tags=[],
+            downloadUrl='downloadUrl',
+            imageid='image_id'
+        )
 
+
+class CollectionMockWithoutDescription(object):
+    def find_one(self, query):
+        return dict(
+            name='videoTitle',
+            tags=[],
+            downloadUrl='downloadUrl',
+            imageid='image_id'
+        )
+
+
+class CollectionMockWithoutTags(object):
+    def find_one(self, query):
+        return dict(
+            name='videoTitle',
+            text='videoDescription',
+            downloadUrl='downloadUrl',
+            imageid='image_id'
+        )
+
+
+class CollectionMockWithTags(object):
+    def find_one(self, query):
+        return dict(
+            name='videoTitle',
+            text='videoDescription',
+            tags='tag1,tag2,tag3',
+            downloadUrl='downloadUrl',
+            imageid='image_id'
+        )
+
+
+class CollectionMockWithSpacesInTags(object):
+    def find_one(self, query):
+        return dict(
+            name='videoTitle',
+            text='videoDescription',
+            tags='tag 1,tag 2,tag 3',
+            downloadUrl='downloadUrl',
+            imageid='image_id'
+        )
+
+
+class CollectionMockWithTrailingSpacesInTags(object):
+    def find_one(self, query):
+        return dict(
+            name='videoTitle',
+            text='videoDescription',
+            tags=' tag 1,tag 2 , tag 3 ',
+            downloadUrl='downloadUrl',
+            imageid='image_id'
+        )
+
+
+class DbFactoryMock(MongoDbFactory):
     mock_to_use = CollectionMock
 
     @staticmethod
@@ -45,7 +106,7 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals([], model.keywords)
         self.assertEquals('id.mpeg', model.filename)
         self.assertEquals('some_id', model.image_id)
-        self.assertEquals('fd447058ca5b7cf49fcec33f3476703e', model.hash_code)
+        self.assertEquals('b57748cc5a3ab4c96d0fd1c48fc29d2b', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_without_image_id(self):
@@ -60,20 +121,95 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals([], model.keywords)
         self.assertEquals('id.mpeg', model.filename)
         self.assertEquals(None, model.image_id)
-        self.assertEquals('c8b5d3de41ac85dc57bfede16b147d25', model.hash_code)
+        self.assertEquals('b57748cc5a3ab4c96d0fd1c48fc29d2b', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_without_a_title(self):
-        pass
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMockWithoutVideoTitle
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals('', model.title)
+        self.assertEquals('videoText', model.description)
+        self.assertEquals([], model.keywords)
+        self.assertEquals('id.mpeg', model.filename)
+        self.assertEquals('image_id', model.image_id)
+        self.assertEquals('78752fb9f104b8032aac17972cab162a', model.hash_code)
+        self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_without_a_description(self):
-        pass
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMockWithoutDescription
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals('videoTitle', model.title)
+        self.assertEquals('', model.description)
+        self.assertEquals([], model.keywords)
+        self.assertEquals('id.mpeg', model.filename)
+        self.assertEquals('image_id', model.image_id)
+        self.assertEquals('fdee39e2aa77eebea0cddd5059768b1f', model.hash_code)
+        self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_without_tags(self):
-        pass
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMockWithoutTags
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals('videoTitle', model.title)
+        self.assertEquals('videoDescription', model.description)
+        self.assertEquals([], model.keywords)
+        self.assertEquals('id.mpeg', model.filename)
+        self.assertEquals('image_id', model.image_id)
+        self.assertEquals('ed41d5874abc1b0e09ca987627c1a218', model.hash_code)
+        self.assertEquals('downloadUrl', model.download_url)
+
+    def test_video_with_tags(self):
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMockWithTags
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals(['tag1', 'tag2', 'tag3'], model.keywords)
 
     def test_video_filename(self):
-        pass
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMock
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals('id.mpeg', model.filename)
 
     def test_video_image_name(self):
-        pass
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMock
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals('id.png', model.image_filename)
+
+    def test_video_with_tags_that_contains_whitespaces(self):
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMockWithSpacesInTags
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals(['tag 1', 'tag 2', 'tag 3'], model.keywords)
+
+    def test_video_with_trailing_spaces_in_tags(self):
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMockWithTrailingSpacesInTags
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals(['tag 1', 'tag 2', 'tag 3'], model.keywords)
