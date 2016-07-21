@@ -113,7 +113,15 @@ class TestUpdateMechanism(unittest.TestCase):
         self.assertEquals('active', registry_model_mock.final_state)
 
     def test_state_is_inactive(self):
-        pass
+        registry_model_mock = RegistryModelMock.create_from_registry_id('some_id')
+        registry_model_mock.status = 'inactive'
+        updating_state = Updating.create_updating_state(registry_model_mock)
+        updating_state.video_model_class = VideoModelMock
+        updating_state.download_binary_from_kaltura_to_disk = download_function_mock
+
+        updating_state.run()
+
+        self.assertEquals('active', registry_model_mock.final_state)
 
 
 class TestUnpublishMechanism(unittest.TestCase):
