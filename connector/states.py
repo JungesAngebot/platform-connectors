@@ -57,7 +57,7 @@ class Error(object):
 
 class Downloading(object):
     def __init__(self, registry_model):
-        self.error_state = DownloadingError()
+        self.error_state = Error()
         self.next_state = Uploading.create_uploading_state(registry_model)
         self.registry_model = registry_model
         self.download_binary_from_kaltura_to_disk = urllib.request.urlretrieve
@@ -94,7 +94,7 @@ class Downloading(object):
 
 class Uploading(object):
     def __init__(self, registry_model):
-        self.error_state = UploadingError()
+        self.error_state = Error()
         self.interaction = PlatformInteraction()
         self.registry_model = registry_model
         self.next_state = Active.create_active_state(self.registry_model)
@@ -119,7 +119,7 @@ class Uploading(object):
 class Active(object):
     def __init__(self, registry_model):
         self.registry_model = registry_model
-        self.error_state = ActiveError()
+        self.error_state = Error()
 
     def _cleanup(self):
         self.registry_model.set_intermediate_state_and_persist('')
@@ -147,7 +147,7 @@ class Updating(object):
         self.registry_model = registry_model
         self.interaction = PlatformInteraction()
         self.next_state = Active.create_active_state(self.registry_model)
-        self.error_state = UpdatingError()
+        self.error_state = Error()
         self.video_model_class = VideoModel
 
     def _fire_error(self):
@@ -172,7 +172,7 @@ class Updating(object):
 
 class Unpublish(object):
     def __init__(self, registry_model):
-        self.error_state = UnpublishError()
+        self.error_state = Error()
         self.registry_model = registry_model
         self.next_state = Inactive.create_inactive_state(self.registry_model)
         self.interaction = PlatformInteraction()
@@ -200,7 +200,7 @@ class Unpublish(object):
 
 class Inactive(object):
     def __init__(self, registry_model):
-        self.error_state = InactiveError()
+        self.error_state = Error()
         self.registry_model = registry_model
 
     def _fire_error(self):
@@ -227,7 +227,7 @@ class Inactive(object):
 class Deleting(object):
     def __init__(self, registry_model):
         self.next_state = Deleted.create_deleted_state(registry_model)
-        self.error_state = DeletingError()
+        self.error_state = Error()
         self.interaction = PlatformInteraction()
         self.registry_model = registry_model
         self.video_model_class = VideoModel
@@ -255,7 +255,7 @@ class Deleting(object):
 class Deleted(object):
     def __init__(self, registry_model):
         self.registry_model = registry_model
-        self.error_state = DeletedError()
+        self.error_state = Error()
 
     def _fire_error(self):
         self.error_state.run()
