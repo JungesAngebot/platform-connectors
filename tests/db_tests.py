@@ -63,3 +63,17 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals('c8b5d3de41ac85dc57bfede16b147d25', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
+    def test_video_without_a_title(self):
+        pass
+
+    def test_video_without_a_description(self):
+        pass
+
+    def test_video_without_tags(self):
+        pass
+
+    def test_video_filename(self):
+        pass
+
+    def test_video_image_name(self):
+        pass
