@@ -99,6 +99,9 @@ class RegistryModel(object):
 
 
 class VideoModel(object):
+
+    db_factory = MongoDbFactory
+
     def __init__(self):
         self.title = None
         self.description = None
@@ -110,7 +113,7 @@ class VideoModel(object):
 
     @classmethod
     def create_from_video_id(cls, video_id):
-        collection = MongoDbFactory.assets_collection()
+        collection = VideoModel.db_factory.assets_collection()
         try:
             video_dict = collection.find_one({'sourceId': video_id})
             video = cls()
@@ -118,6 +121,7 @@ class VideoModel(object):
             video.description = video_dict['text']
             video.keywords = video_dict['tags'].split(',') if video_dict['tags'] else []
             video.filename = '%s.mpeg' % video_id
+            video.image_filename = '%s.png' % video_id
             video.download_url = video_dict['downloadUrl']
             video.image_id = video_dict['image_id'] if 'image_id' in video_dict else None
             video_hash_code = hashlib.md5()
