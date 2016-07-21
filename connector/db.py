@@ -95,10 +95,10 @@ class RegistryModel(object):
             obj.status = registry_obj['status']
             obj.message = registry_obj['message']
             obj.target_platform = registry_obj['targetPlatform']
-            obj.target_platform_video_id = registry_obj['targetPlatformVideoId']
+            obj.target_platform_video_id = registry_obj['targetPlatformVideoId'] if 'targetPlatformVideoId' in registry_obj else ''
             obj.mapping_id = registry_obj['mappingId']
-            obj.intermediate_state = registry_obj['intermediateState']
-            obj.video_hash_code = registry_obj['video_hash_code']
+            obj.intermediate_state = registry_obj['intermediateState'] if 'intermediateState' in registry_obj else ''
+            obj.video_hash_code = registry_obj['video_hash_code']  if 'video_hash_code' in registry_obj else ''
             return obj
         except Exception as e:
             raise Exception('Cannot create registry model for registry id %s.' % registry_id) from e
