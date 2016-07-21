@@ -12,7 +12,10 @@ class Error(object):
         pass
 
     def run(self):
-        pass
+        try:
+            pass
+        except Exception:
+            log_error('Error while processing video.')
 
 
 class Downloading(object):
