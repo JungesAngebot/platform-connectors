@@ -13,7 +13,7 @@ class Error(object):
 
     def run(self):
         try:
-            pass
+            self.registry_model.set_state_and_persist('error')
         except Exception:
             log_error('Error while processing video.')
 
