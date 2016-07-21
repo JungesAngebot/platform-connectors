@@ -1,4 +1,8 @@
+from flask.ext.script import Manager
+
+from connector.handler import create_app
+
+manager = Manager(create_app)
 
 if __name__ == '__main__':
-    pass
-
+    manager.run()

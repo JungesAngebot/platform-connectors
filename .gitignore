@@ -1,2 +1,7 @@
 .idea/
 *.iml
+config/
+*.json
+**/__pycache__/
+*.mpeg
+**/.cache/
