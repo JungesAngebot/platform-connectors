@@ -49,10 +49,7 @@ def unpublish_request(registry_id):
 def delete_request(registry_id):
     try:
         registry_model = RegistryModel.create_from_registry_id(registry_id)
-        if registry_model.status == 'error':
-            pass
-        else:
-            Deleting.create_deleting_state(registry_model).run()
+        Deleting.create_deleting_state(registry_model).run()
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
