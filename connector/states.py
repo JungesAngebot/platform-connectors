@@ -139,8 +139,8 @@ class Updating(object):
 
 class Unpublish(object):
     def __init__(self, registry_model):
-        self.error_state = Error()
         self.registry_model = registry_model
+        self.error_state = Error.create_error_state(registry_model)
         self.next_state = Inactive.create_inactive_state(self.registry_model)
         self.interaction = PlatformInteraction()
         self.video_model_class = VideoModel
