@@ -2,6 +2,8 @@ import hashlib
 import os
 
 from bson import ObjectId
+from gridfs import GridFS
+from bson import ObjectId
 from commonspy.logging import log_error
 from pymongo import MongoClient
 
@@ -32,6 +34,10 @@ class MongoDbFactory(object):
     @staticmethod
     def assets_collection():
         return MongoDbFactory._create_mongo_db_client_for_system('external')[ASSET_DB][ASSETS]
+
+    @staticmethod
+    def einszwo_internal_database():
+        return MongoDbFactory._create_mongo_db_client_for_system('external')[ASSET_DB]
 
 
 class RegistryModel(object):
@@ -137,6 +143,22 @@ class VideoModel(object):
             return video
         except Exception as e:
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
+
+
+def persist_video_image_on_disk(video_model):
+    image_id = video_model.image_id
+    database = MongoDbFactory.einszwo_internal_database()
+    try:
+        fs = GridFS(database)
+        try:
+            result = fs.get(image_id)
+        except Exception:
+            result = fs.get(ObjectId(image_id))
+        with open(video_model.image_filename, 'wb') as file:
+            file.write(result.read())
+    except Exception as e:
+        video_id = video_model.video_id
+        raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (image_id, video_id)) from e
 
 
 class MappingModel(object):

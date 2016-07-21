@@ -2,8 +2,8 @@ from connector.facebook import upload_video_to_facebook, update_video_on_faceboo
     delete_video_on_facebook
 
 
-def dummy(video, registry):
-    pass
+def dummy(video=None, registry=None):
+    return video, registry
 
 
 class PlatformInteraction(object):
