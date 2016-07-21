@@ -25,6 +25,17 @@ class CollectionMockWithoutImageId(object):
         )
 
 
+class CollectionMockWithoutVideoTitle(object):
+
+    def find_one(self):
+        return dict(
+            text='videoText',
+            tags=[],
+            downloadUrl='downloadUrl',
+            image_id='image_id'
+        )
+
+
 class DbFactoryMock(MongoDbFactory):
 
     mock_to_use = CollectionMock
