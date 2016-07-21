@@ -114,7 +114,7 @@ class Updating(object):
         self.registry_model = registry_model
         self.interaction = PlatformInteraction()
         self.next_state = Active.create_active_state(self.registry_model)
-        self.error_state = Error()
+        self.error_state = Error.create_error_state(registry_model)
         self.video_model_class = VideoModel
 
     def _fire_error(self):
