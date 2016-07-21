@@ -1,3 +1,6 @@
+from connector.facebook import upload_video_to_facebook, update_video_on_facebook, unpublish_video_on_facebook, \
+    delete_video_on_facebook
+
 
 def dummy(video):
     pass
@@ -7,10 +10,10 @@ class PlatformInteraction(object):
     def __init__(self):
         self.registered_platforms = {
             'facebook': {
-                'upload': dummy,
-                'update': dummy,
-                'unpublish': dummy,
-                'delete': dummy
+                'upload': upload_video_to_facebook,
+                'update': update_video_on_facebook,
+                'unpublish': unpublish_video_on_facebook,
+                'delete': delete_video_on_facebook
             },
             'youtube': {
                 'upload': dummy,
