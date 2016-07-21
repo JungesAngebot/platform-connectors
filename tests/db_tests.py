@@ -157,7 +157,13 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals(['tag1', 'tag2', 'tag3'], model.keywords)
 
     def test_video_filename(self):
-        pass
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMock
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals('id.mpeg', model.filename)
 
     def test_video_image_name(self):
         pass
