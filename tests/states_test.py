@@ -2,7 +2,7 @@ import hashlib
 import unittest
 
 from connector.db import RegistryModel, VideoModel
-from connector.states import Downloading, Updating
+from connector.states import Downloading, Updating, Unpublish
 
 
 class RegistryModelMock(RegistryModel):
@@ -125,7 +125,27 @@ class TestUpdateMechanism(unittest.TestCase):
 
 
 class TestUnpublishMechanism(unittest.TestCase):
-    pass
+    def test_state_is_active(self):
+        registry_model_mock = RegistryModelMock.create_from_registry_id('some_id')
+        registry_model_mock.status = 'inactive'
+        unpublish_state = Unpublish.create_unpublish_state(registry_model_mock)
+        unpublish_state.video_model_class = VideoModelMock
+        unpublish_state.download_binary_from_kaltura_to_disk = download_function_mock
+
+        unpublish_state.run()
+
+        self.assertEquals('inactive', registry_model_mock.final_state)
+
+    def test_state_is_inactive(self):
+        registry_model_mock = RegistryModelMock.create_from_registry_id('some_id')
+        registry_model_mock.status = 'active'
+        unpublish_state = Unpublish.create_unpublish_state(registry_model_mock)
+        unpublish_state.video_model_class = VideoModelMock
+        unpublish_state.download_binary_from_kaltura_to_disk = download_function_mock
+
+        unpublish_state.run()
+
+        self.assertEquals('inactive', registry_model_mock.final_state)
 
 
 class TestDeleteMechanism(unittest.TestCase):
