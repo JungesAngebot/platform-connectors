@@ -130,9 +130,6 @@ class VideoModel(object):
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
             video_hash_code.update(bytes(video.description.encode('UTF-8')))
             video_hash_code.update(bytes(str(video.keywords).encode('UTF-8')))
-            video_hash_code.update(bytes(video.filename.encode('UTF-8')))
-            video_hash_code.update(bytes(video.download_url.encode('UTF-8')))
-            video_hash_code.update(bytes(video.image_id.encode('UTF-8')) if video.image_id is not None else "".encode('UTF-8'))
             video.hash_code = video_hash_code.hexdigest()
             return video
         except Exception as e:
