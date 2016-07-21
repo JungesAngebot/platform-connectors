@@ -141,7 +141,7 @@ class VideoModel(object):
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
 
 
-def persist_video_image_on_disk(cls, video_model):
+def persist_video_image_on_disk(video_model):
     image_id = video_model.image_id
     database = MongoDbFactory.einszwo_internal_database()
     try:
