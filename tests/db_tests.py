@@ -148,7 +148,13 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_with_tags(self):
-        pass
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMockWithTags
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals(['tag1', 'tag2', 'tag3'], model.keywords)
 
     def test_video_filename(self):
         pass
