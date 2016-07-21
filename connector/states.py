@@ -7,46 +7,6 @@ from connector.db import VideoModel
 from connector.platforms import PlatformInteraction
 
 
-class DownloadingError(object):
-    def run(self):
-        pass
-
-
-class UploadingError(object):
-    def run(self):
-        pass
-
-
-class ActiveError(object):
-    def run(self):
-        pass
-
-
-class UpdatingError(object):
-    def run(self):
-        pass
-
-
-class UnpublishError(object):
-    def run(self):
-        pass
-
-
-class DeletingError(object):
-    def run(self):
-        pass
-
-
-class DeletedError(object):
-    def run(self):
-        pass
-
-
-class InactiveError(object):
-    def run(self):
-        pass
-
-
 class Error(object):
     def __init__(self):
         pass
