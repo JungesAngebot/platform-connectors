@@ -8,7 +8,7 @@ from connector.platforms import PlatformInteraction
 
 
 class Error(object):
-    def __init__(self):
+    def __init__(self, registry_model):
         pass
 
     def run(self):
@@ -16,6 +16,10 @@ class Error(object):
             pass
         except Exception:
             log_error('Error while processing video.')
+
+    @classmethod
+    def create_error_state(cls, registry_model):
+        pass
 
 
 class Downloading(object):
