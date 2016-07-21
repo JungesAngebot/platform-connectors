@@ -134,3 +134,7 @@ class VideoModel(object):
             return video
         except Exception as e:
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
+
+
+class Image(object):
+    pass
