@@ -59,11 +59,13 @@ def download_function_mock(download_url, filename):
 
 class TestUploadMechanism(unittest.TestCase):
     def test_upload_video_notified_state(self):
-        registry_model_mock = RegistryModelMock()
+        registry_model_mock = RegistryModelMock.create_from_registry_id('someid')
         download_state = Downloading.create_downloading_state(registry_model_mock)
         download_state.video_model_class = VideoModelMock
         download_state.download_binary_from_kaltura_to_disk = download_function_mock
         download_state.run()
+
+        self.assertEquals('active', registry_model_mock.final_state)
 
 
 class TestUpdateMechanism(unittest.TestCase):
