@@ -131,44 +131,38 @@ def resumable_upload(insert_request):
     return video_id
 
 
-def initialize_upload(youtube, options, channel_id):
+def initialize_upload(youtube, video: VideoModel, channel_id):
     """ initialized the youtube video upload. This
     mechanism uses the youtube partner authentication / client
     and is only able to upload videos to a multi channel
     youtube network.
 
     :param youtube: youtube client (standard and partner)
-    :param options: video options and metadata
+    :param video: video metadata
     :param channel_id: the target channel
     :return: resumable upload
     """
-    tags = options['keywords']
-    # if options['keywords']:
-    #     tags = options['keywords'].split(',')
+
     body = dict(
         snippet=dict(
-            title=options['title'],
-            description=options['description'],
-            tags=tags,
-            categoryId=options['category']
+            title=video.title,
+            description=video.description,
+            tags=video.keywords,
+            categoryId=22
         ),
         status=dict(
-            privacyStatus=options['privacy_status']
+            privacyStatus='private'
         )
     )
-    try:
-        inser_request = youtube[0].videos().insert(
-            part=','.join(body.keys()),
-            body=body,
-            onBehalfOfContentOwner=get_content_owner_id(youtube[1]),
-            onBehalfOfContentOwnerChannel=channel_id,
-            media_body=MediaFileUpload(options['filename'], chunksize=-1, resumable=True)
-        )
-        return resumable_upload(inser_request)
-    except FileNotFoundError as e:
-        message_dbo = MessageDbo()
-        message_dbo.add_upload_error(options['filename'], options['title'], e.__str__())
-    return None
+
+    insert_request = youtube[0].videos().insert(
+        part=','.join(body.keys()),
+        body=body,
+        onBehalfOfContentOwner=get_content_owner_id(youtube[1]),
+        onBehalfOfContentOwnerChannel=channel_id,
+        media_body=MediaFileUpload(video.filename, chunksize=-1, resumable=True)
+    )
+    return resumable_upload(insert_request)
 
 
 def log_video_state(youtube_video_id):
@@ -205,19 +199,11 @@ def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
     the upload mechanism retries the upload. Uploading
     errors are logged into a mongo db collection.
     """
-    options = dict(
-        keywords=video.keywords,
-        title=video.title,
-        description=video.description,
-        category=22,
-        privacy_status='private',
-        filename=video.filename
-    )
 
     try:
         mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
         youtube = youtube_inst()
-        video_id = initialize_upload(youtube, options, mapping.target_id)
+        video_id = initialize_upload(youtube, video, mapping.target_id)
 
         if video_id is None or video_id == '':
             registry.target_platform_video_id = video_id
