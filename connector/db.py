@@ -30,6 +30,10 @@ class MongoDbFactory(object):
     def assets_collection():
         return MongoDbFactory._create_mongo_db_client_for_system('external')[ASSET_DB][ASSETS]
 
+    @staticmethod
+    def einszwo_internal_database():
+        return MongoDbFactory._create_mongo_db_client_for_system('external')[ASSET_DB]
+
 
 class RegistryModel(object):
     def __init__(self):
@@ -135,6 +139,32 @@ class VideoModel(object):
         except Exception as e:
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
 
+"""
+#!/usr/bin/env python3
+import json
 
+from gridfs import GridFS
+from pymongo import MongoClient
+
+from connector import APP_ROOT
+
+with open(APP_ROOT + '/config/connector.json') as file:
+    config = json.loads(file.read())
+
+mongo_url = config['source']['mongodb']
+mongo_db = config['source']['database']
+
+client = MongoClient(mongo_url)
+
+database = client[mongo_db]
+
+fs = GridFS(database)
+
+result = fs.get('fc7d8c1f555fac64ea99f77909a377d3')
+
+file = open('test.png', 'wb')
+file.write(result.read())
+
+"""
 class Image(object):
     pass
