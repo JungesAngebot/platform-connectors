@@ -205,4 +205,10 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals(['tag 1', 'tag 2', 'tag 3'], model.keywords)
 
     def test_video_with_trailing_spaces_in_tags(self):
-        pass
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMockWithTrailingSpacesInTags
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals(['tag 1', 'tag 2', 'tag 3'], model.keywords)
