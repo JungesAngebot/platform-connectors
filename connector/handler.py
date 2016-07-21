@@ -23,7 +23,10 @@ def update_request(registry_id):
         elif registry_model.status == 'inactive':
             Active.create_active_state(registry_model).run()
         elif registry_model.status == 'error':
-            pass
+            if registry_model.intermediate_state == 'downloading':
+                pass
+            elif registry_model.intermediate_state == 'uploading':
+                pass
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
