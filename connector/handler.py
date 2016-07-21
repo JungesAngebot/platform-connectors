@@ -37,10 +37,8 @@ def update_request(registry_id):
 def unpublish_request(registry_id):
     try:
         registry_model = RegistryModel.create_from_registry_id(registry_id)
-        if registry_model.status == 'active':
+        if registry_model.status == 'active' or registry_model.status == 'error':
             Unpublish.create_unpublish_state(registry_model).run()
-        if registry_model.status == 'error':
-            pass
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
