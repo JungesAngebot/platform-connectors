@@ -65,6 +65,17 @@ class CollectionMockWithTags(object):
         )
 
 
+class CollectionMockWithSpacesInTags(object):
+    def find_one(self, query):
+        return dict(
+            name='videoTitle',
+            text='videoDescription',
+            tags='tag 1,tag 2,tag 3',
+            downloadUrl='downloadUrl',
+            image_id='image_id'
+        )
+
+
 class DbFactoryMock(MongoDbFactory):
     mock_to_use = CollectionMock
 
