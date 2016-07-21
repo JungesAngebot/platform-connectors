@@ -103,7 +103,7 @@ class Active(object):
         try:
             self.registry_model.set_state_and_persist('active')
             self._cleanup()
-        except Exception as e:
+        except Exception:
             log_error('Cannot set state to active.')
             self._fire_error()
 
