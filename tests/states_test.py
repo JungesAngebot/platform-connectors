@@ -2,7 +2,7 @@ import hashlib
 import unittest
 
 from connector.db import RegistryModel, VideoModel
-from connector.states import Downloading
+from connector.states import Downloading, Updating
 
 
 class RegistryModelMock(RegistryModel):
@@ -101,7 +101,19 @@ class TestUploadMechanism(unittest.TestCase):
 
 
 class TestUpdateMechanism(unittest.TestCase):
-    pass
+    def test_current_video_state_is_active(self):
+        registry_model_mock = RegistryModelMock.create_from_registry_id('some_id')
+        registry_model_mock.status = 'active'
+        updating_state = Updating.create_updating_state(registry_model_mock)
+        updating_state.video_model_class = VideoModelMock
+        updating_state.download_binary_from_kaltura_to_disk = download_function_mock
+
+        updating_state.run()
+
+        self.assertEquals('active', registry_model_mock.final_state)
+
+    def test_state_is_inactive(self):
+        pass
 
 
 class TestUnpublishMechanism(unittest.TestCase):
