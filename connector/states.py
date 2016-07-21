@@ -93,6 +93,8 @@ class Active(object):
         self.registry_model.set_intermediate_state_and_persist('')
         if os.path.isfile('%s.mpeg' % self.registry_model.video_id):
             os.remove('%s.mpeg' % self.registry_model.video_id)
+        if os.path.isfile('%s.png' % self.registry_model.video_id):
+            os.remove('%s.png' % self.registry_model.video_id)
 
     def _fire_error(self):
         self.error_state.run()
