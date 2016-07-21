@@ -47,6 +47,15 @@ class InactiveError(object):
         pass
 
 
+class Error(object):
+    def __init__(self):
+        pass
+
+    def run(self):
+        pass
+
+
+
 class Downloading(object):
     def __init__(self, registry_model):
         self.error_state = DownloadingError()
