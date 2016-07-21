@@ -86,7 +86,7 @@ class Uploading(object):
 class Active(object):
     def __init__(self, registry_model):
         self.registry_model = registry_model
-        self.error_state = Error()
+        self.error_state = Error.create_error_state(registry_model)
 
     def _cleanup(self):
         self.registry_model.set_intermediate_state_and_persist('')
