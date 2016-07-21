@@ -20,8 +20,8 @@ class PlatformInteraction(object):
             }
         }
 
-    def execute_platform_interaction(self, platform, interaction, video):
+    def execute_platform_interaction(self, platform, interaction, video, registry_model):
         if platform in self.registered_platforms and interaction in self.registered_platforms[platform]:
-            self.registered_platforms[platform][interaction](video)
+            self.registered_platforms[platform][interaction](video, registry_model)
         else:
             raise Exception('Target platform %s with interaction %s does not exist!')
