@@ -125,7 +125,7 @@ class VideoModel(object):
             video.filename = '%s.mpeg' % video_id
             video.image_filename = '%s.png' % video_id
             video.download_url = video_dict['downloadUrl']
-            video.image_id = video_dict['image_id'] if 'image_id' in video_dict else None
+            video.image_id = video_dict['imageid'] if 'imageid' in video_dict else None
             video_hash_code = hashlib.md5()
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
             video_hash_code.update(bytes(video.description.encode('UTF-8')))

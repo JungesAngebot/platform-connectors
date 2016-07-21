@@ -10,7 +10,7 @@ class CollectionMock(object):
             text='videoText',
             tags=[],
             downloadUrl='downloadUrl',
-            image_id='some_id'
+            imageid='some_id'
         )
 
 
@@ -30,7 +30,7 @@ class CollectionMockWithoutVideoTitle(object):
             text='videoText',
             tags=[],
             downloadUrl='downloadUrl',
-            image_id='image_id'
+            imageid='image_id'
         )
 
 
@@ -40,7 +40,7 @@ class CollectionMockWithoutDescription(object):
             name='videoTitle',
             tags=[],
             downloadUrl='downloadUrl',
-            image_id='image_id'
+            imageid='image_id'
         )
 
 
@@ -50,7 +50,7 @@ class CollectionMockWithoutTags(object):
             name='videoTitle',
             text='videoDescription',
             downloadUrl='downloadUrl',
-            image_id='image_id'
+            imageid='image_id'
         )
 
 
@@ -61,7 +61,7 @@ class CollectionMockWithTags(object):
             text='videoDescription',
             tags='tag1,tag2,tag3',
             downloadUrl='downloadUrl',
-            image_id='image_id'
+            imageid='image_id'
         )
 
 
@@ -72,7 +72,7 @@ class CollectionMockWithSpacesInTags(object):
             text='videoDescription',
             tags='tag 1,tag 2,tag 3',
             downloadUrl='downloadUrl',
-            image_id='image_id'
+            imageid='image_id'
         )
 
 
@@ -83,7 +83,7 @@ class CollectionMockWithTrailingSpacesInTags(object):
             text='videoDescription',
             tags=' tag 1,tag 2 , tag 3 ',
             downloadUrl='downloadUrl',
-            image_id='image_id'
+            imageid='image_id'
         )
 
 
