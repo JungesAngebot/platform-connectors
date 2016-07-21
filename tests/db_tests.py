@@ -136,6 +136,9 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals('7b0874a50d48c45ab258534142bd182c', model.hash_code)
         self.assertEquals('downloadUrl', model.download_url)
 
+    def test_video_with_tags(self):
+        pass
+
     def test_video_filename(self):
         pass
 
