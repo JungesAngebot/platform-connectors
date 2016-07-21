@@ -52,7 +52,11 @@ class VideoModelMock(VideoModel):
 
 
 def download_function_mock(download_url, filename):
-    pass
+    return download_url, filename
+
+
+def download_image(video_model):
+    return video_model
 
 
 class TestUploadMechanism(unittest.TestCase):
@@ -60,6 +64,7 @@ class TestUploadMechanism(unittest.TestCase):
         registry_model_mock = RegistryModelMock.create_from_registry_id('some_id')
         download_state = Downloading.create_downloading_state(registry_model_mock)
         download_state.video_model_class = VideoModelMock
+        download_state.image_download = download_image
         download_state.download_binary_from_kaltura_to_disk = download_function_mock
 
         download_state.run()
@@ -71,6 +76,7 @@ class TestUploadMechanism(unittest.TestCase):
         registry_model_mock.status = 'active'
         download_state = Downloading.create_downloading_state(registry_model_mock)
         download_state.video_model_class = VideoModelMock
+        download_state.image_download = download_image
         download_state.download_binary_from_kaltura_to_disk = download_function_mock
 
         download_state.run()
@@ -82,6 +88,7 @@ class TestUploadMechanism(unittest.TestCase):
         registry_model_mock.status = 'inactive'
         download_state = Downloading.create_downloading_state(registry_model_mock)
         download_state.video_model_class = VideoModelMock
+        download_state.image_download = download_image
         download_state.download_binary_from_kaltura_to_disk = download_function_mock
 
         download_state.run()
@@ -92,6 +99,7 @@ class TestUploadMechanism(unittest.TestCase):
         registry_model_mock = RegistryModelMock.create_from_registry_id('some_id')
         registry_model_mock.status = 'deleted'
         download_state = Downloading.create_downloading_state(registry_model_mock)
+        download_state.image_download = download_image
         download_state.video_model_class = VideoModelMock
         download_state.download_binary_from_kaltura_to_disk = download_function_mock
 
