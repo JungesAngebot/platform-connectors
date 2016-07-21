@@ -119,7 +119,7 @@ class VideoModel(object):
             video_dict = collection.find_one({'sourceId': video_id})
             video = cls()
             video.title = video_dict['name'] if 'name' in video_dict else ''
-            video.description = video_dict['text']
+            video.description = video_dict['text'] if 'text' in video_dict else ''
             video.keywords = video_dict['tags'].split(',') if video_dict['tags'] else []
             video.filename = '%s.mpeg' % video_id
             video.image_filename = '%s.png' % video_id

@@ -100,7 +100,20 @@ class VideoModelTest(unittest.TestCase):
         self.assertEquals('downloadUrl', model.download_url)
 
     def test_video_without_a_description(self):
-        pass
+        factory_mock = DbFactoryMock
+        factory_mock.mock_to_use = CollectionMockWithoutDescription
+        VideoModel.db_factory = factory_mock
+
+        model = VideoModel.create_from_video_id('id')
+
+        self.assertEquals('videoTitle', model.title)
+        self.assertEquals('', model.description)
+        self.assertEquals([], model.keywords)
+        self.assertEquals('id.mpeg', model.filename)
+        self.assertEquals('image_id', model.image_id)
+        self.assertEquals('e46a220b84fe357e381b0799aac47226', model.hash_code)
+        self.assertEquals('downloadUrl', model.download_url)
+
 
     def test_video_without_tags(self):
         pass
