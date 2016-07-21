@@ -86,6 +86,7 @@ class CollectionMockWithTrailingSpacesInTags(object):
             image_id='image_id'
         )
 
+
 class DbFactoryMock(MongoDbFactory):
     mock_to_use = CollectionMock
 
