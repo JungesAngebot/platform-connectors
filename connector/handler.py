@@ -22,6 +22,8 @@ def update_request(registry_id):
             Updating.create_updating_state(registry_model).run()
         elif registry_model.status == 'inactive':
             Active.create_active_state(registry_model).run()
+        elif registry_model.status == 'error':
+            pass
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
@@ -34,6 +36,8 @@ def unpublish_request(registry_id):
         registry_model = RegistryModel.create_from_registry_id(registry_id)
         if registry_model.status == 'active':
             Unpublish.create_unpublish_state(registry_model).run()
+        if registry_model.status == 'error':
+            pass
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
@@ -44,7 +48,10 @@ def unpublish_request(registry_id):
 def delete_request(registry_id):
     try:
         registry_model = RegistryModel.create_from_registry_id(registry_id)
-        Deleting.create_deleting_state(registry_model).run()
+        if registry_model.status == 'error':
+            pass
+        else:
+            Deleting.create_deleting_state(registry_model).run()
     except Exception as e:
         log_error(e)
         return jsonify({'status': 'error'})
