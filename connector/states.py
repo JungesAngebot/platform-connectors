@@ -24,7 +24,7 @@ class Error(object):
 
 class Downloading(object):
     def __init__(self, registry_model):
-        self.error_state = Error()
+        self.error_state = Error.create_error_state(registry_model)
         self.next_state = Uploading.create_uploading_state(registry_model)
         self.registry_model = registry_model
         self.download_binary_from_kaltura_to_disk = urllib.request.urlretrieve
