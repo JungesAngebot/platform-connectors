@@ -173,3 +173,9 @@ class VideoModelTest(unittest.TestCase):
         model = VideoModel.create_from_video_id('id')
 
         self.assertEquals('id.png', model.image_filename)
+
+    def test_video_with_tags_that_contains_whitespaces(self):
+        pass
+
+    def test_video_with_trailing_spaces_in_tags(self):
+        pass
