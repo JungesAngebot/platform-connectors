@@ -222,6 +222,7 @@ class Deleting(object):
         self.error_state = DeletingError()
         self.interaction = PlatformInteraction()
         self.registry_model = registry_model
+        self.video_model_class = VideoModel
 
     def _fire_error(self):
         self.error_state.run()
@@ -229,7 +230,7 @@ class Deleting(object):
     def run(self):
         try:
             self.registry_model.set_intermediate_state_and_persist('deleting')
-            video_model = VideoModel.create_from_video_id(self.registry_model.video_id)
+            video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'delete', video_model, self.registry_model)
             self.next_state.run()
         except Exception:

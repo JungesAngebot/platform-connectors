@@ -2,7 +2,7 @@ import hashlib
 import unittest
 
 from connector.db import RegistryModel, VideoModel
-from connector.states import Downloading, Updating, Unpublish
+from connector.states import Downloading, Updating, Unpublish, Deleting
 
 
 class RegistryModelMock(RegistryModel):
@@ -149,4 +149,24 @@ class TestUnpublishMechanism(unittest.TestCase):
 
 
 class TestDeleteMechanism(unittest.TestCase):
-    pass
+    def test_delete_state_active(self):
+        registry_model_mock = RegistryModelMock.create_from_registry_id('some_id')
+        registry_model_mock.status = 'active'
+        deleting_state = Deleting.create_deleting_state(registry_model_mock)
+        deleting_state.video_model_class = VideoModelMock
+        deleting_state.download_binary_from_kaltura_to_disk = download_function_mock
+
+        deleting_state.run()
+
+        self.assertEquals('deleted', registry_model_mock.final_state)
+
+    def test_delete_state_inactive(self):
+        registry_model_mock = RegistryModelMock.create_from_registry_id('some_id')
+        registry_model_mock.status = 'inactive'
+        deleting_state = Deleting.create_deleting_state(registry_model_mock)
+        deleting_state.video_model_class = VideoModelMock
+        deleting_state.download_binary_from_kaltura_to_disk = download_function_mock
+
+        deleting_state.run()
+
+        self.assertEquals('deleted', registry_model_mock.final_state)
