@@ -1,6 +1,6 @@
 
-def dummy(video, registry):
-    pass
+def dummy(video=None, registry=None):
+    return video, registry
 
 
 class PlatformInteraction(object):
