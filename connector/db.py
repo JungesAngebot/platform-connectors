@@ -110,6 +110,7 @@ class VideoModel(object):
         self.download_url = None
         self.image_id = None
         self.hash_code = None
+        self.image_filename = None
 
     @classmethod
     def create_from_video_id(cls, video_id):
