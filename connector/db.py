@@ -1,6 +1,7 @@
 import hashlib
 import os
 
+from bson import ObjectId
 from gridfs import GridFS
 from pymongo import MongoClient
 
@@ -146,7 +147,10 @@ def persist_video_image_on_disk(video_model):
     database = MongoDbFactory.einszwo_internal_database()
     try:
         fs = GridFS(database)
-        result = fs.get(image_id)
+        try:
+            result = fs.get(image_id)
+        except Exception:
+            result = fs.get(ObjectId(image_id))
         with open(video_model.image_filename, 'wb') as file:
             file.write(result.read())
     except Exception as e:
