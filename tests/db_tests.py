@@ -213,3 +213,7 @@ class VideoModelTest(unittest.TestCase):
         model = VideoModel.create_from_video_id('id')
 
         self.assertEquals(['tag 1', 'tag 2', 'tag 3'], model.keywords)
+
+
+class RegistryModelTest(unittest.TestCase):
+    pass
