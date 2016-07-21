@@ -1,5 +1,5 @@
 
-def dummy(video):
+def dummy(video, registry):
     pass
 
 

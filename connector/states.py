@@ -140,6 +140,7 @@ class Updating(object):
         self.interaction = PlatformInteraction()
         self.next_state = Active.create_active_state(self.registry_model)
         self.error_state = UpdatingError()
+        self.video_model_class = VideoModel
 
     def _fire_error(self):
         self.error_state.run()
@@ -147,8 +148,8 @@ class Updating(object):
     def run(self):
         try:
             self.registry_model.set_intermediate_state_and_persist('updating')
-            video_model = VideoModel.create_from_video_id(self.registry_model.video_id)
-            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model)
+            video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model, self.registry_model)
             self.next_state.run()
         except Exception as e:
             registry_id = self.registry_model.registry_id
