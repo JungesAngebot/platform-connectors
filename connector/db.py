@@ -136,7 +136,6 @@ class VideoModel(object):
             video_hash_code = hashlib.md5()
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
             video_hash_code.update(bytes(video.description.encode('UTF-8')))
-            # video_hash_code.update(bytes(str(video.keywords).encode('UTF-8')))
             video.hash_code = video_hash_code.hexdigest()
             return video
         except Exception as e:
