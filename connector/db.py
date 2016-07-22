@@ -2,10 +2,12 @@ import hashlib
 import os
 
 from bson import ObjectId
+from commonspy.logging import log_error
 from gridfs import GridFS
 from pymongo import MongoClient
 
-from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_REGISTRY, CONNECTOR_MAPPINGS, ASSET_DB, ASSETS
+from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_REGISTRY, CONNECTOR_MAPPINGS, ASSET_DB, \
+    ASSETS
 
 
 class MongoDbFactory(object):
@@ -105,7 +107,6 @@ class RegistryModel(object):
 
 
 class VideoModel(object):
-
     db_factory = MongoDbFactory
 
     def __init__(self):
@@ -135,7 +136,7 @@ class VideoModel(object):
             video_hash_code = hashlib.md5()
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
             video_hash_code.update(bytes(video.description.encode('UTF-8')))
-            video_hash_code.update(bytes(str(video.keywords).encode('UTF-8')))
+            # video_hash_code.update(bytes(str(video.keywords).encode('UTF-8')))
             video.hash_code = video_hash_code.hexdigest()
             return video
         except Exception as e:
@@ -156,3 +157,25 @@ def persist_video_image_on_disk(video_model):
     except Exception as e:
         video_id = video_model.video_id
         raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (image_id, video_id)) from e
+
+
+class MappingModel(object):
+    def __init__(self):
+        self._id = None
+        self.target_id = None
+        self.target_platform = None
+        self.category_id = None
+
+    @classmethod
+    def create_from_mapping_id(cls, mapping_id):
+        collection = MongoDbFactory.connector_mappings_collection()
+        try:
+            mapping_dict = collection.find_one({'_id': ObjectId(mapping_id)})
+            mapping = cls()
+            mapping.target_id = mapping_dict['target_id']
+            mapping.target_platform = mapping_dict['target_platform']
+            mapping.category_id = mapping_dict['category_id']
+            return mapping
+        except Exception as e:
+            log_error('Cannot retrieve mapping with id %s from mapping collection.' % mapping_id)
+            raise Exception('Cannot retrieve video with id %s from asset collection.' % mapping_id) from e
