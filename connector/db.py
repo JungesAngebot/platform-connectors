@@ -2,7 +2,7 @@ import hashlib
 import os
 
 from bson import ObjectId
-from commonspy.logging import log_error
+from commonspy.logging import log_error, log_debug
 from gridfs import GridFS
 from pymongo import MongoClient
 
@@ -24,18 +24,22 @@ class MongoDbFactory(object):
 
     @staticmethod
     def connector_registry_collection():
+        log_debug('retrieving registry collection...')
         return MongoDbFactory._create_mongo_db_client_for_system('internal')[CONNECTOR_DB][CONNECTOR_REGISTRY]
 
     @staticmethod
     def connector_mappings_collection():
+        log_debug('retrieving mappings collection...')
         return MongoDbFactory._create_mongo_db_client_for_system('internal')[CONNECTOR_DB][CONNECTOR_MAPPINGS]
 
     @staticmethod
     def assets_collection():
+        log_debug('retrieving assets collection')
         return MongoDbFactory._create_mongo_db_client_for_system('external')[ASSET_DB][ASSETS]
 
     @staticmethod
     def einszwo_internal_database():
+        log_debug('creating connection to einszwo_internal database in mongodb...')
         return MongoDbFactory._create_mongo_db_client_for_system('external')[ASSET_DB]
 
 
