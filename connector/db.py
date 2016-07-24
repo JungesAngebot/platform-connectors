@@ -154,6 +154,7 @@ class VideoModel(object):
 
 
 def persist_video_image_on_disk(video_model):
+    log_debug('Going to store thumbnail for video %s on disk...' % video_model.video_id)
     image_id = video_model.image_id
     database = MongoDbFactory.einszwo_internal_database()
     try:
