@@ -4,13 +4,14 @@ import time
 from random import random
 
 import httplib2
+from commonspy.logging import logger, Message
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import run_flow
-from commonspy.logging import logger, Message
+
 from connector import APP_ROOT
 from connector.db import MessageDbo, RegistryDbo
 
