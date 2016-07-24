@@ -74,10 +74,12 @@ class Uploading(object):
     def run(self, video):
         try:
             self.registry_model.set_intermediate_state_and_persist('uploading')
-            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video, self.registry_model)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video,
+                                                          self.registry_model)
             self.next_state.run()
         except Exception:
-            log_error('Cannot perform target platform upload of video with id %s and registry id %s.' % (self.registry_model.registry_id, self.registry_model.video_id))
+            log_error('Cannot perform target platform upload of video with id %s and registry id %s.' % (
+            self.registry_model.registry_id, self.registry_model.video_id))
             self._fire_error()
 
     @classmethod
@@ -128,7 +130,8 @@ class Updating(object):
         try:
             self.registry_model.set_intermediate_state_and_persist('updating')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
-            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model, self.registry_model)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model,
+                                                          self.registry_model)
             self.next_state.run()
         except Exception:
             registry_id = self.registry_model.registry_id
@@ -156,7 +159,8 @@ class Unpublish(object):
         try:
             self.registry_model.set_intermediate_state_and_persist('unpublishing')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
-            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'unpublish', video_model, self.registry_model)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'unpublish', video_model,
+                                                          self.registry_model)
             self.next_state.run()
         except Exception:
             registry_id = self.registry_model.registry_id
@@ -210,7 +214,8 @@ class Deleting(object):
         try:
             self.registry_model.set_intermediate_state_and_persist('deleting')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
-            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'delete', video_model, self.registry_model)
+            self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'delete', video_model,
+                                                          self.registry_model)
             self.next_state.run()
         except Exception:
             registry_id = self.registry_model.registry_id
