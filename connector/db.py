@@ -129,9 +129,11 @@ class VideoModel(object):
 
     @classmethod
     def create_from_video_id(cls, video_id):
+        log_debug('Creating video model from id %s.' % video_id)
         collection = VideoModel.db_factory.assets_collection()
         try:
             video_dict = collection.find_one({'sourceId': video_id})
+            log_debug('Found matching database entry.')
             video = cls()
             video.title = video_dict['name'] if 'name' in video_dict else ''
             video.description = video_dict['text'] if 'text' in video_dict else ''
@@ -145,6 +147,7 @@ class VideoModel(object):
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
             video_hash_code.update(bytes(video.description.encode('UTF-8')))
             video.hash_code = video_hash_code.hexdigest()
+            log_debug('Loaded video model with id %s successfully.' % video_id)
             return video
         except Exception as e:
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
