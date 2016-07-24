@@ -42,9 +42,11 @@ def update_request(registry_id):
 
 @api.route('/unpublish/<string:registry_id>')
 def unpublish_request(registry_id):
+    log_info('Going to execute unpublish event for registry id %s.' % registry_id)
     try:
         registry_model = RegistryModel.create_from_registry_id(registry_id)
         if registry_model.status == 'active' or registry_model.status == 'error':
+            log_info('Unpublishing video...')
             Unpublish.create_unpublish_state(registry_model).run()
     except Exception as e:
         log_error(e)
@@ -54,6 +56,7 @@ def unpublish_request(registry_id):
 
 @api.route('/delete/<string:registry_id>')
 def delete_request(registry_id):
+    log_info('Going to delete video with registry id %s.' % registry_id)
     try:
         registry_model = RegistryModel.create_from_registry_id(registry_id)
         Deleting.create_deleting_state(registry_model).run()
