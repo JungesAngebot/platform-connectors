@@ -91,9 +91,11 @@ class RegistryModel(object):
 
     @classmethod
     def create_from_registry_id(cls, registry_id):
+        log_debug('Creating registry model from registry id %s.' % registry_id)
         collection = MongoDbFactory.connector_registry_collection()
         try:
             registry_obj = collection.find_one({'_id': registry_id})
+            log_debug('Found matching registry entry...')
             obj = cls()
             obj.registry_id = registry_id
             obj.video_id = registry_obj['videoId']
@@ -101,10 +103,12 @@ class RegistryModel(object):
             obj.status = registry_obj['status']
             obj.message = registry_obj['message']
             obj.target_platform = registry_obj['targetPlatform']
-            obj.target_platform_video_id = registry_obj['targetPlatformVideoId'] if 'targetPlatformVideoId' in registry_obj else ''
+            obj.target_platform_video_id = registry_obj[
+                'targetPlatformVideoId'] if 'targetPlatformVideoId' in registry_obj else ''
             obj.mapping_id = registry_obj['mappingId']
             obj.intermediate_state = registry_obj['intermediateState'] if 'intermediateState' in registry_obj else ''
-            obj.video_hash_code = registry_obj['video_hash_code']  if 'video_hash_code' in registry_obj else ''
+            obj.video_hash_code = registry_obj['video_hash_code'] if 'video_hash_code' in registry_obj else ''
+            log_debug('Loaded registry entry with id %s successfully.' % registry_id)
             return obj
         except Exception as e:
             raise Exception('Cannot create registry model for registry id %s.' % registry_id) from e
@@ -159,7 +163,8 @@ def persist_video_image_on_disk(video_model):
             file.write(result.read())
     except Exception as e:
         video_id = video_model.video_id
-        raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (image_id, video_id)) from e
+        raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (
+        image_id, video_id)) from e
 
 
 class MappingModel(object):
