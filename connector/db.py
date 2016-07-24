@@ -168,7 +168,7 @@ def persist_video_image_on_disk(video_model):
     except Exception as e:
         video_id = video_model.video_id
         raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (
-        image_id, video_id)) from e
+            image_id, video_id)) from e
 
 
 class MappingModel(object):
