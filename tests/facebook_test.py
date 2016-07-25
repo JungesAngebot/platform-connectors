@@ -135,7 +135,8 @@ class FacebookUploadTest(unittest.TestCase):
         video = create_test_video_model()
         video.image_filename = None
 
-        self.assertRaises(Exception, upload_video_to_facebook, video, registry)
+        with self.assertRaises(Exception):
+            upload_video_to_facebook(video, registry)
 
     @mock.patch('requests.post', side_effect=mocked_req_upload_success)
     def test_error_if_platform_id_is_set(self, mock_post):
@@ -146,7 +147,8 @@ class FacebookUploadTest(unittest.TestCase):
         registry.target_platform_video_id = '321'
         video = create_test_video_model()
 
-        self.assertRaises(Exception, upload_video_to_facebook, video, registry)
+        with self.assertRaises(Exception):
+            upload_video_to_facebook(video, registry)
 
     @mock.patch('requests.post', side_effect=mocked_req_upload_success)
     def test_error_if_intermediate_state_not_valid(self, mock_post):
@@ -157,7 +159,8 @@ class FacebookUploadTest(unittest.TestCase):
         registry.intermediate_state = 'downloading'
         video = create_test_video_model()
 
-        self.assertRaises(Exception, upload_video_to_facebook, video, registry)
+        with self.assertRaises(Exception):
+            upload_video_to_facebook(video, registry)
 
 
 class FacebookUpdateTest(unittest.TestCase):
@@ -190,70 +193,77 @@ class FacebookUpdateTest(unittest.TestCase):
         registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
         video = create_test_video_model()
 
-        self.assertRaises(Exception, update_video_on_facebook, video, registry);
+        with self.assertRaises(Exception):
+            update_video_on_facebook(video, registry)
 
-    @mock.patch('requests.post', side_effect=mocked_req_update_success)
-    @mock.patch('requests.get', side_effect=mocked_req_update_success)
-    def test_error_if_intermediate_state_wrong(self, mock_get, mock_post):
-        MappingModel.db_factory = DbFactoryMock
-        RegistryModel.db_factory = DbFactoryMock
 
-        registry = create_test_registry_model()
-        registry.intermediate_state = 'downloading'
-        registry.target_platform_video_id = '1'
-        registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
-        video = create_test_video_model()
+@mock.patch('requests.post', side_effect=mocked_req_update_success)
+@mock.patch('requests.get', side_effect=mocked_req_update_success)
+def test_error_if_intermediate_state_wrong(self, mock_get, mock_post):
+    MappingModel.db_factory = DbFactoryMock
+    RegistryModel.db_factory = DbFactoryMock
 
-        self.assertRaises(Exception, update_video_on_facebook, video, registry);
+    registry = create_test_registry_model()
+    registry.intermediate_state = 'downloading'
+    registry.target_platform_video_id = '1'
+    registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
+    video = create_test_video_model()
 
-    @mock.patch('requests.post', side_effect=mocked_req_update_error)
-    @mock.patch('requests.get', side_effect=mocked_req_update_error)
-    def test_error_if_request_error(self, mock_get, mock_post):
-        MappingModel.db_factory = DbFactoryMock
-        RegistryModel.db_factory = DbFactoryMock
-
-        registry = create_test_registry_model()
-        registry.intermediate_state = 'updating'
-        registry.target_platform_video_id = '1'
-        registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
-        video = create_test_video_model()
-
-        self.assertRaises(Exception, update_video_on_facebook, video, registry);
-
-    @mock.patch('requests.post', side_effect=mocked_req_update_success)
-    @mock.patch('requests.get', side_effect=mocked_req_update_success)
-    def test_do_nothing_if_video_hash_equal_to_registry_hash(self, mock_get, mock_post):
-        MappingModel.db_factory = DbFactoryMock
-        RegistryModel.db_factory = DbFactoryMock
-
-        registry = create_test_registry_model()
-        registry.intermediate_state = 'updating'
-        registry.target_platform_video_id = '1'
-        registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
-        video = create_test_video_model()
-        video.hash_code = registry.video_hash_code
-
+    with self.assertRaises(Exception):
         update_video_on_facebook(video, registry)
-        self.assertNotIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
-                                   {'access_token': '1234', 'description': 'Test-Description', 'name': 'Test-Title'}),
-                         mock_post.call_args_list)
 
-    @mock.patch('requests.post', side_effect=mocked_req_update_success)
-    @mock.patch('requests.get', side_effect=mocked_req_update_success)
-    def test_do_nothing_if_remote_hash_not_equal_to_registry_hash(self, mock_get, mock_post):
-        MappingModel.db_factory = DbFactoryMock
-        RegistryModel.db_factory = DbFactoryMock
 
-        registry = create_test_registry_model()
-        registry.intermediate_state = 'updating'
-        registry.target_platform_video_id = '1'
-        registry.video_hash_code = create_metadata_hash({'title': 'Test-Title2', 'description': 'Test-Description'})
-        video = create_test_video_model()
+@mock.patch('requests.post', side_effect=mocked_req_update_error)
+@mock.patch('requests.get', side_effect=mocked_req_update_error)
+def test_error_if_request_error(self, mock_get, mock_post):
+    MappingModel.db_factory = DbFactoryMock
+    RegistryModel.db_factory = DbFactoryMock
 
+    registry = create_test_registry_model()
+    registry.intermediate_state = 'updating'
+    registry.target_platform_video_id = '1'
+    registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
+    video = create_test_video_model()
+
+    with self.assertRaises(Exception):
         update_video_on_facebook(video, registry)
-        self.assertNotIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
-                                   {'access_token': '1234', 'description': 'Test-Description', 'name': 'Test-Title'}),
-                         mock_post.call_args_list)
+
+
+@mock.patch('requests.post', side_effect=mocked_req_update_success)
+@mock.patch('requests.get', side_effect=mocked_req_update_success)
+def test_do_nothing_if_video_hash_equal_to_registry_hash(self, mock_get, mock_post):
+    MappingModel.db_factory = DbFactoryMock
+    RegistryModel.db_factory = DbFactoryMock
+
+    registry = create_test_registry_model()
+    registry.intermediate_state = 'updating'
+    registry.target_platform_video_id = '1'
+    registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
+    video = create_test_video_model()
+    video.hash_code = registry.video_hash_code
+
+    update_video_on_facebook(video, registry)
+    self.assertNotIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
+                               {'access_token': '1234', 'description': 'Test-Description', 'name': 'Test-Title'}),
+                     mock_post.call_args_list)
+
+
+@mock.patch('requests.post', side_effect=mocked_req_update_success)
+@mock.patch('requests.get', side_effect=mocked_req_update_success)
+def test_do_nothing_if_remote_hash_not_equal_to_registry_hash(self, mock_get, mock_post):
+    MappingModel.db_factory = DbFactoryMock
+    RegistryModel.db_factory = DbFactoryMock
+
+    registry = create_test_registry_model()
+    registry.intermediate_state = 'updating'
+    registry.target_platform_video_id = '1'
+    registry.video_hash_code = create_metadata_hash({'title': 'Test-Title2', 'description': 'Test-Description'})
+    video = create_test_video_model()
+
+    update_video_on_facebook(video, registry)
+    self.assertNotIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
+                               {'access_token': '1234', 'description': 'Test-Description', 'name': 'Test-Title'}),
+                     mock_post.call_args_list)
 
 
 class FacebookUnpublishTest(unittest.TestCase):
@@ -300,7 +310,5 @@ class FacebookUnpublishTest(unittest.TestCase):
         registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
         video = create_test_video_model()
 
-        self.assertRaises(Exception, unpublish_video_on_facebook, video, registry);
-        self.assertNotIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
-                                   {'access_token': '1234', 'expire_now': 'true'}),
-                         mock_post.call_args_list)
+        with self.assertRaises(Exception):
+            unpublish_video_on_facebook(video, registry)
