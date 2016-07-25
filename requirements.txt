@@ -4,4 +4,5 @@ oauth2client
 httplib2
 tornado
 pymongo
+requests
 google-api-python-client
