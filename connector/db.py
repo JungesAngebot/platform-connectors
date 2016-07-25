@@ -44,6 +44,8 @@ class MongoDbFactory(object):
 
 
 class RegistryModel(object):
+    db_factory = MongoDbFactory
+
     def __init__(self):
         self.registry_id = None
         self.video_id = None
@@ -69,7 +71,7 @@ class RegistryModel(object):
         self._persist()
 
     def _persist(self):
-        collection = MongoDbFactory.connector_registry_collection()
+        collection = RegistryModel.db_factory.connector_registry_collection()
         try:
             collection.save(self._to_dict())
         except Exception as e:
@@ -92,7 +94,7 @@ class RegistryModel(object):
     @classmethod
     def create_from_registry_id(cls, registry_id):
         log_debug('Creating registry model from registry id %s.' % registry_id)
-        collection = MongoDbFactory.connector_registry_collection()
+        collection = RegistryModel.db_factory.connector_registry_collection()
         try:
             registry_obj = collection.find_one({'_id': registry_id})
             log_debug('Found matching registry entry...')
@@ -172,6 +174,8 @@ def persist_video_image_on_disk(video_model):
 
 
 class MappingModel(object):
+    db_factory = MongoDbFactory
+
     def __init__(self):
         self._id = None
         self.target_id = None
@@ -180,7 +184,7 @@ class MappingModel(object):
 
     @classmethod
     def create_from_mapping_id(cls, mapping_id):
-        collection = MongoDbFactory.connector_mappings_collection()
+        collection = MappingModel.db_factory.connector_mappings_collection()
         try:
             mapping_dict = collection.find_one({'_id': ObjectId(mapping_id)})
             mapping = cls()
