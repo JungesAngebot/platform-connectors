@@ -5,3 +5,5 @@ config/
 **/__pycache__/
 *.mpeg
 **/.cache/
+build/
+/.gradle/
