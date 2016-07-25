@@ -1,0 +1,109 @@
+import de.gesellix.gradle.docker.tasks.*
+
+plugins {
+    id "de.gesellix.docker" version "2016-02-08T22-29-47"
+}
+
+version "1.0.0." + (System.getenv("BUILD_NUMBER") ?: "0") + "-BETA"
+
+ext {
+    localDockerHost = "192.168.99.100:2376"
+    registryHost = "10.71.104.172:5000"
+    image_name = 'platform-connector'
+
+    defaultCertPath = System.getProperty('docker.cert.path') ?: "${System.getProperty('user.home')}/.docker/machine/machines/default"
+}
+
+task deleteBuild(type: Delete) {
+    delete 'build'
+
+}
+task copyConnector(type: Copy) {
+    dependsOn deleteBuild
+    from('./connector')
+    into './build/docker/connector'
+}
+
+task copyDockerfile(type: Copy) {
+    dependsOn copyConnector
+    from('./Dockerfile')
+    from('./Makefile')
+    from('./requirements.txt')
+    from('./entrypoint.sh')
+    from('./manage.py')
+    from('./config.py')
+    into './build/docker'
+}
+
+task rmImage(type: DockerRmiTask) {
+    imageId = image_name + ":" + version
+}
+
+task rmImageLatest(type: DockerRmiTask) {
+    imageId = image_name + ":latest"
+}
+
+task buildImage(type: DockerBuildTask) {
+    dependsOn rmImage, rmImageLatest, copyDockerfile
+    imageName = image_name + ":" + version
+
+    buildContextDirectory = file("./build/docker")
+}
+
+task tagImage(type: DockerTagTask) {
+    dependsOn buildImage
+
+    force = true
+    imageId = image_name + ":" + version
+    tag = registryHost + "/" + image_name + ":" + version
+}
+
+
+task tagImageLatest(type: DockerTagTask) {
+    dependsOn buildImage
+
+    force = true
+    imageId = image_name + ":" + version
+    tag = registryHost + "/" + image_name + ":latest"
+}
+
+task pushImageLatest(type: DockerPushTask) {
+    dependsOn tagImageLatest
+
+    repositoryName = image_name + ":latest"
+    registry = registryHost
+}
+
+task pushImage(type: DockerPushTask) {
+    dependsOn tagImage, pushImageLatest
+
+    repositoryName = image_name + ":" + version
+    registry = registryHost
+}
+
+task stopContainer(type: DockerStopTask) {
+    dependsOn buildImage
+    containerId = image_name
+}
+
+task rmContainer(type: DockerRmTask) {
+    dependsOn stopContainer
+    containerId = image_name
+}
+
+task runContainer(type: DockerRunTask) {
+    dependsOn rmContainer
+    imageName = image_name + ":" + version
+    containerName = image_name
+    env = [
+            "CONNECTOR_MONGO_DB=mongodb://mongo:27017/",
+            "ASSET_MONGO_DB=mongodb://mongo:27017/"
+    ]
+    containerConfiguration = [
+            "ExposedPorts": ["5000/tcp": [:]],
+            "HostConfig"  : [
+                    "Links"       : ["mongo:mongo"],
+                    "PortBindings": ["5000/tcp": [["HostPort": "9010"]]]
+            ]
+    ]
+}

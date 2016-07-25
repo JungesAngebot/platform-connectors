@@ -3,5 +3,8 @@ Flask-Script
 oauth2client
 httplib2
 tornado
+requests
 pymongo
 google-api-python-client
+python-json-logger
+git+https://github.com/JungesAngebot/commonspy.git
