@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import time
 from random import random
@@ -8,6 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets
+from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client.file import Storage
 from oauth2client.tools import run_flow
 from commonspy.logging import logger, Message, log_info
@@ -32,6 +34,7 @@ youtube_scopes = (
     'https://www.googleapis.com/auth/youtubepartner'
 )
 
+scopes = ['https://www.googleapis.com/auth/sqlservice.admin']
 
 class UpdateError(Exception):
     """ Error during update operations. """
@@ -76,22 +79,18 @@ def youtube_inst():
     - Standard Youtube Scope (full read / write access)
     - Youtube partner scope
     """
-    flow = flow_from_clientsecrets(
-        APP_ROOT + '/config/client_secret.json',
-        scope=' '.join(youtube_scopes),
-        message='No client secrets provided.'
-    )
+    log_info("client-secret path exists: %s" % os.path.isfile(APP_ROOT + '/config/client_secrets.json'))
 
-    storage = Storage("{0}-oauth2.json".format(sys.argv[0]))
-    credentials = storage.get()
-    if credentials is None:
-        credentials = run_flow(flow, storage)
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        APP_ROOT + '/config/client_secrets.json', scopes=scopes)
+
+    http_auth = credentials.authorize(httplib2.Http())
 
     youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
-                    http=credentials.authorize(httplib2.Http()))
+                    http=http_auth)
 
     youtube_partner = build(YOUTUBE_CONTENT_ID_API_SERVICE_NAME,
-                            YOUTUBE_CONTENT_ID_API_VERSION, http=credentials.authorize(httplib2.Http()))
+                            YOUTUBE_CONTENT_ID_API_VERSION, http_auth)
 
     return youtube, youtube_partner
 
