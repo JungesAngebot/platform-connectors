@@ -154,7 +154,6 @@ class VideoModel(object):
         except Exception as e:
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
 
-
 def persist_video_image_on_disk(video_model):
     log_debug('Going to store thumbnail for video %s on disk...' % video_model.video_id)
     image_id = video_model.image_id
