@@ -12,7 +12,7 @@ from oauth2client.file import Storage
 from oauth2client.tools import run_flow
 from commonspy.logging import logger, Message, log_info
 from connector import APP_ROOT
-from connector.db import MessageDbo, RegistryDbo, VideoModel, RegistryModel, MappingModel
+from connector.db import VideoModel, RegistryModel, MappingModel
 
 """ This module handles youtube video upload, update
 and unpublish. Videos are only uploaded to multi
