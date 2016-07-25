@@ -19,6 +19,15 @@ and unpublish. Videos are only uploaded to multi
 channel networks. Single channel upload (for non
 youtube partners) is not supported.
 """
+# Always retry when these exceptions are raised.
+RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError, httplib2.NotConnected,
+                        httplib2.IncompleteRead, httplib2.ImproperConnectionState,
+                        httplib2.CannotSendRequest, httplib2.CannotSendHeader,
+                        httplib2.ResponseNotReady, httplib2.BadStatusLine,)
+
+# Always retry when an apiclient.errors.HttpError with one of these status
+# codes is raised.
+RETRIABLE_STATUS_CODES = (500, 502, 503, 504,)
 
 INVALID_CREDENTIALS = b"Invalid Credentials"
 
@@ -107,22 +116,26 @@ def resumable_upload(insert_request):
     video_id = None
     while response is None:
         try:
-            print("Uploading file...")
+            log_info("Uploading file...")
             status, response = insert_request.next_chunk()
             if 'id' in response:
                 video_id = response['id']
-                print("Video id '%s' was successfully uploaded." % video_id)
+                log_info("Video id '%s' was successfully uploaded." % video_id)
             else:
-                exit("The upload failed with an unexpected response: %s" % response)
+                raise Exception("The upload failed with an unexpected response: %s" % response)
         except HttpError as e:
-            print(e.resp)
-            raise
+            if e.resp.status in RETRIABLE_STATUS_CODES:
+                error = 'A retriable HTTP error %d occurred:\n%s' % (e.resp.status, e.content)
+            else:
+                raise
+        except RETRIABLE_EXCEPTIONS as e:
+            error = "A retriable error occurred: %s" % e
 
         if error is not None:
             print(error)
             retry += 1
             if retry > 10:
-                exit("No longer attempting to retry.")
+                raise Exception("No longer attempting to retry.")
 
             max_sleep = 2 ** retry
             sleep_seconds = random.random() * max_sleep
@@ -131,14 +144,15 @@ def resumable_upload(insert_request):
     return video_id
 
 
-def initialize_upload(youtube, video: VideoModel, channel_id):
+def initialize_upload(youtube, video: VideoModel,content_owner_id, channel_id):
     """ initialized the youtube video upload. This
     mechanism uses the youtube partner authentication / client
     and is only able to upload videos to a multi channel
     youtube network.
 
-    :param youtube: youtube client (standard and partner)
+    :param youtube: youtube client (partner)
     :param video: video metadata
+    :param content_owner_id: the id of the channel owner
     :param channel_id: the target channel
     :return: resumable upload
     """
@@ -155,10 +169,10 @@ def initialize_upload(youtube, video: VideoModel, channel_id):
         )
     )
 
-    insert_request = youtube[0].videos().insert(
+    insert_request = youtube.videos().insert(
         part=','.join(body.keys()),
         body=body,
-        onBehalfOfContentOwner=get_content_owner_id(youtube[1]),
+        onBehalfOfContentOwner=content_owner_id,
         onBehalfOfContentOwnerChannel=channel_id,
         media_body=MediaFileUpload(video.filename, chunksize=-1, resumable=True)
     )
