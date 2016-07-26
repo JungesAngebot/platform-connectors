@@ -1,3 +1,5 @@
+import traceback
+
 from commonspy.logging import log_error, log_info
 from flask import Flask, jsonify
 
@@ -36,6 +38,7 @@ def update_request(registry_id):
                 Updating.create_updating_state(registry_model).run()
     except Exception as e:
         log_error(e)
+        traceback.print_tb(e.__traceback__)
         return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})
 
@@ -50,6 +53,7 @@ def unpublish_request(registry_id):
             Unpublish.create_unpublish_state(registry_model).run()
     except Exception as e:
         log_error(e)
+        traceback.print_tb(e.__traceback__)
         return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})
 
@@ -62,5 +66,6 @@ def delete_request(registry_id):
         Deleting.create_deleting_state(registry_model).run()
     except Exception as e:
         log_error(e)
+        traceback.print_tb(e.__traceback__)
         return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})

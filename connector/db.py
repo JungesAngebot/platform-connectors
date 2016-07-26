@@ -1,5 +1,6 @@
 import hashlib
 import os
+import traceback
 
 from bson import ObjectId
 from commonspy.logging import log_error, log_debug
@@ -75,6 +76,7 @@ class RegistryModel(object):
         try:
             collection.save(self._to_dict())
         except Exception as e:
+            traceback.print_exc()
             raise Exception('Cannot update state of registry item with id %s.' % self.registry_id) from e
 
     def _to_dict(self):
@@ -113,6 +115,7 @@ class RegistryModel(object):
             log_debug('Loaded registry entry with id %s successfully.' % registry_id)
             return obj
         except Exception as e:
+            traceback.print_exc()
             raise Exception('Cannot create registry model for registry id %s.' % registry_id) from e
 
 
@@ -152,7 +155,9 @@ class VideoModel(object):
             log_debug('Loaded video model with id %s successfully.' % video_id)
             return video
         except Exception as e:
+            traceback.print_exc()
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
+
 
 def persist_video_image_on_disk(video_model):
     log_debug('Going to store thumbnail for video %s on disk...' % video_model.video_id)
@@ -167,6 +172,7 @@ def persist_video_image_on_disk(video_model):
         with open(video_model.image_filename, 'wb') as file:
             file.write(result.read())
     except Exception as e:
+        traceback.print_exc()
         video_id = video_model.video_id
         raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (
             image_id, video_id)) from e
@@ -192,5 +198,6 @@ class MappingModel(object):
             mapping.category_id = mapping_dict['category_id']
             return mapping
         except Exception as e:
+            traceback.print_exc()
             log_error('Cannot retrieve mapping with id %s from mapping collection.' % mapping_id)
             raise Exception('Cannot retrieve video with id %s from asset collection.' % mapping_id) from e
