@@ -9,7 +9,7 @@ version "1.0.0." + (System.getenv("BUILD_NUMBER") ?: "0") + "-BETA"
 ext {
     localDockerHost = "192.168.99.100:2376"
     registryHost = "10.71.104.172:5000"
-    image_name = 'platform-connector'
+    image_name = 'platform-connectors'
 
     defaultCertPath = System.getProperty('docker.cert.path') ?: "${System.getProperty('user.home')}/.docker/machine/machines/default"
 }
