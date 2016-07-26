@@ -5,14 +5,12 @@ import time
 from random import random
 
 import httplib2
+from commonspy.logging import logger, Message, log_info, log_debug
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
-from oauth2client.client import flow_from_clientsecrets
 from oauth2client.service_account import ServiceAccountCredentials
-from oauth2client.file import Storage
-from oauth2client.tools import run_flow
-from commonspy.logging import logger, Message, log_info
+
 from connector import APP_ROOT
 from connector.db import VideoModel, RegistryModel, MappingModel
 
@@ -22,17 +20,14 @@ channel networks. Single channel upload (for non
 youtube partners) is not supported.
 """
 # Always retry when these exceptions are raised.
-RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError, httplib2.NotConnected,
-                        httplib2.IncompleteRead, httplib2.ImproperConnectionState,
-                        httplib2.CannotSendRequest, httplib2.CannotSendHeader,
-                        httplib2.ResponseNotReady, httplib2.BadStatusLine,)
+RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError,)
 
 # Always retry when an apiclient.errors.HttpError with one of these status
 # codes is raised.
 RETRIABLE_STATUS_CODES = (500, 502, 503, 504,)
 
 INVALID_CREDENTIALS = b"Invalid Credentials"
-
+YOUTUBE_EMAIL = "youtube@ard.de"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 YOUTUBE_CONTENT_ID_API_SERVICE_NAME = "youtubePartner"
@@ -40,10 +35,11 @@ YOUTUBE_CONTENT_ID_API_VERSION = "v1"
 
 youtube_scopes = (
     'https://www.googleapis.com/auth/youtube',
-    'https://www.googleapis.com/auth/youtubepartner'
+    'https://www.googleapis.com/auth/youtube.upload',
+    'https://www.googleapis.com/auth/youtubepartner',
+    'https://www.googleapis.com/auth/youtube.force-ssl'
 )
 
-scopes = ['https://www.googleapis.com/auth/sqlservice.admin']
 
 class UpdateError(Exception):
     """ Error during update operations. """
@@ -88,18 +84,18 @@ def youtube_inst():
     - Standard Youtube Scope (full read / write access)
     - Youtube partner scope
     """
-    log_info("client-secret path exists: %s" % os.path.isfile(APP_ROOT + '/config/client_secrets.json'))
 
     credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        APP_ROOT + '/config/client_secrets.json', scopes=scopes)
+        APP_ROOT + '/config/client_secrets.json', scopes=youtube_scopes)
 
-    http_auth = credentials.authorize(httplib2.Http())
+    http = httplib2.Http()
+    http = credentials.authorize(http)
 
     youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
-                    http=http_auth)
+                    http=http)
 
     youtube_partner = build(YOUTUBE_CONTENT_ID_API_SERVICE_NAME,
-                            YOUTUBE_CONTENT_ID_API_VERSION, http_auth)
+                            YOUTUBE_CONTENT_ID_API_VERSION, http=http)
 
     return youtube, youtube_partner
 
@@ -143,7 +139,7 @@ def resumable_upload(insert_request):
     return video_id
 
 
-def initialize_upload(youtube, video: VideoModel,content_owner_id, channel_id):
+def initialize_upload(youtube, youtube_partner, video: VideoModel, content_owner_id, channel_id):
     """ initialized the youtube video upload. This
     mechanism uses the youtube partner authentication / client
     and is only able to upload videos to a multi channel
@@ -189,20 +185,20 @@ def log_video_state(youtube_video_id):
         id=youtube_video_id
     ).execute()
     video = result['items'][0]
-    logger.debug(Message('Youtube already uploaded: Privacy Status: ' + video['status']['privacyStatus']).__dict__)
-    logger.debug(Message('Youtube already uploaded: Upload Status: ' + video['status']['uploadStatus']).__dict__)
-    logger.debug(Message('Youtube already uploaded: License Status: ' + video['status']['license']).__dict__)
+    log_debug('Youtube %s already uploaded: Privacy Status: %s' % (youtube_video_id, video['status']['privacyStatus']))
+    log_debug('Youtube %s already uploaded: Upload Status: %s' % (youtube_video_id, video['status']['uploadStatus']))
+    log_debug('Youtube %s already uploaded: License Status: %s' % (youtube_video_id, video['status']['license']))
 
 
 def check_video_upload_successful(youtube_video_id):
-    youtube = youtube_inst()
+    youtube, youtube_partner = youtube_inst()
 
-    response = youtube[0].videos().list(
+    response = youtube.videos().list(
         part='status',
         id=youtube_video_id
     ).execute()
 
-    print(response['status']['uploadStatus'])
+    log_info('upload for video %s has status %s' % (youtube_video_id, response['status']['uploadStatus']))
 
 
 def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
@@ -215,8 +211,9 @@ def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
 
     try:
         mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
-        youtube = youtube_inst()
-        video_id = initialize_upload(youtube, video, mapping.target_id)
+        youtube, youtube_partner = youtube_inst()
+        content_owner = get_content_owner_id(youtube_partner)
+        video_id = initialize_upload(youtube, youtube_partner, video, content_owner, mapping.target_id)
 
         if video_id is None or video_id == '':
             registry.target_platform_video_id = video_id
