@@ -154,8 +154,9 @@ class VideoModel(object):
         except Exception as e:
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
 
-def persist_video_image_on_disk(video_model):
-    log_debug('Going to store thumbnail for video %s on disk...' % video_model.video_id)
+
+def persist_video_image_on_disk(video_model: VideoModel):
+    log_debug('Going to store thumbnail with id %s on disk...' % video_model.image_id)
     image_id = video_model.image_id
     database = MongoDbFactory.einszwo_internal_database()
     try:
@@ -167,9 +168,8 @@ def persist_video_image_on_disk(video_model):
         with open(video_model.image_filename, 'wb') as file:
             file.write(result.read())
     except Exception as e:
-        video_id = video_model.video_id
-        raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (
-            image_id, video_id)) from e
+        raise Exception('Cannot read image with id %s. GridFS connection not working' %
+                        image_id) from e
 
 
 class MappingModel(object):

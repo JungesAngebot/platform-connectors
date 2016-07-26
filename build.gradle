@@ -24,8 +24,14 @@ task copyConnector(type: Copy) {
     into './build/docker/connector'
 }
 
+task copyConfig(type: Copy) {
+    dependsOn deleteBuild
+    from('./config')
+    into './build/docker/config'
+}
+
 task copyDockerfile(type: Copy) {
-    dependsOn copyConnector
+    dependsOn copyConnector, copyConfig
     from('./Dockerfile')
     from('./Makefile')
     from('./requirements.txt')

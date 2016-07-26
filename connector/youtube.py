@@ -269,7 +269,7 @@ def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
         video_remote_hash = create_metadata_hash(video_metadata)
 
         if registry.video_hash_code != video_remote_hash:
-            log_info('Metadata of video %s was changed on facebook. No update allowed.' % registry.registry_id)
+            log_info('Metadata of video %s was changed on youtube. No update allowed.' % registry.registry_id)
             return
 
         video_metadata['title'] = video.title
