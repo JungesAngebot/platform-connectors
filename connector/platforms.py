@@ -1,5 +1,7 @@
 from connector.facebook import upload_video_to_facebook, update_video_on_facebook, unpublish_video_on_facebook, \
     delete_video_on_facebook
+from connector.youtube import upload_video_to_youtube, delete_video_on_youtube, unpublish_video_on_youtube, \
+    update_video_on_youtube
 
 
 def dummy(video=None, registry=None):
@@ -16,10 +18,10 @@ class PlatformInteraction(object):
                 'delete': delete_video_on_facebook
             },
             'youtube': {
-                'upload': dummy,
-                'update': dummy,
-                'unpublish': dummy,
-                'delete': dummy
+                'upload': upload_video_to_youtube,
+                'update': update_video_on_youtube,
+                'unpublish': unpublish_video_on_youtube,
+                'delete': delete_video_on_youtube
             }
         }
 

@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 import sys
@@ -5,7 +6,7 @@ import time
 from random import random
 
 import httplib2
-from commonspy.logging import logger, Message, log_info, log_debug
+from commonspy.logging import log_info, log_error
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
@@ -27,11 +28,10 @@ RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError,)
 RETRIABLE_STATUS_CODES = (500, 502, 503, 504,)
 
 INVALID_CREDENTIALS = b"Invalid Credentials"
-YOUTUBE_EMAIL = "youtube@ard.de"
-YOUTUBE_API_SERVICE_NAME = "youtube"
-YOUTUBE_API_VERSION = "v3"
-YOUTUBE_CONTENT_ID_API_SERVICE_NAME = "youtubePartner"
-YOUTUBE_CONTENT_ID_API_VERSION = "v1"
+YOUTUBE_API_SERVICE_NAME = 'youtube'
+YOUTUBE_API_VERSION = 'v3'
+YOUTUBE_CONTENT_ID_API_SERVICE_NAME = 'youtubePartner'
+YOUTUBE_CONTENT_ID_API_VERSION = 'v1'
 
 youtube_scopes = (
     'https://www.googleapis.com/auth/youtube',
@@ -55,34 +55,34 @@ class UnpublishError(Exception):
         pass
 
 
-def get_content_owner_id(youtube_partner):
-    """ Function to gather the youtube content owner
-    id. This id is required to upload a video to
-    a multi channel network on youtube.
+def create_metadata_hash(metadata):
     """
-    content_owners_list_response = None
-    try:
-        content_owners_list_response = youtube_partner.contentOwners().list(
-            fetchMine=True
-        ).execute()
-    except HttpError as e:
-        if INVALID_CREDENTIALS in e.content:
-            logging.error("The request is not authorized by a Google Account that "
-                          "is linked to a YouTube content owner. Please delete '%s' and "
-                          "re-authenticate with a YouTube content owner account." %
-                          "{0}-oauth2.json".format(sys.argv[0]))
-            raise
 
-    return content_owners_list_response["items"][0]["id"]
+    Create hash for metadata read for a video from facebook.
+
+    :param metadata: metadata-response
+    :return: md5-hash of values
+    """
+    video_hash_code = hashlib.md5()
+    if 'title' in metadata:
+        video_hash_code.update(bytes(metadata['title'].encode('UTF-8')))
+    if 'description' in metadata:
+        video_hash_code.update(bytes(metadata['description'].encode('UTF-8')))
+    #    if 'tags' in metadata:
+    #        video_hash_code.update(bytes(metadata['tags'].encode('UTF-8')))
+
+    return video_hash_code.hexdigest()
 
 
 def youtube_inst():
     """ Authenticates at the youtube api.
     The connector will always upload to multi channel
-    networks on youtube. Therefor two youtube
+    networks on youtube. Therefor four youtube
     api scopes are required:
     - Standard Youtube Scope (full read / write access)
     - Youtube partner scope
+    - Youtube Upload Scope
+    - Youtube force-ssl Scope
     """
 
     credentials = ServiceAccountCredentials.from_json_keyfile_name(
@@ -100,6 +100,23 @@ def youtube_inst():
     return youtube, youtube_partner
 
 
+def get_content_owner_id(youtube_partner):
+    """ Function to gather the youtube content owner
+    id. This id is required to upload a video to
+    a multi channel network on youtube.
+    """
+
+    try:
+        content_owners_list_response = youtube_partner.contentOwners().list(
+            fetchMine=True
+        ).execute()
+    except HttpError as e:
+        raise Exception(
+            'The request is not authorized by a Google Account that is linked to a YouTube content owner.') from e
+
+    return content_owners_list_response['items'][0]['id']
+
+
 def resumable_upload(insert_request):
     """ Actually uploads the video to youtube.
     If an error occours the function will retry the
@@ -111,35 +128,35 @@ def resumable_upload(insert_request):
     video_id = None
     while response is None:
         try:
-            log_info("Uploading file...")
+            log_info('Uploading file...')
             status, response = insert_request.next_chunk()
             if 'id' in response:
                 video_id = response['id']
-                log_info("Video id '%s' was successfully uploaded." % video_id)
+                log_info('Video id %s was successfully uploaded.' % video_id)
             else:
-                raise Exception("The upload failed with an unexpected response: %s" % response)
+                raise Exception('The upload failed with an unexpected response: %s' % response)
         except HttpError as e:
             if e.resp.status in RETRIABLE_STATUS_CODES:
                 error = 'A retriable HTTP error %d occurred:\n%s' % (e.resp.status, e.content)
             else:
                 raise
         except RETRIABLE_EXCEPTIONS as e:
-            error = "A retriable error occurred: %s" % e
+            error = 'A retriable error occurred: %s' % e
 
         if error is not None:
-            print(error)
+            log_error('Error during upload, retrying it. Message: %s' % error)
             retry += 1
             if retry > 10:
-                raise Exception("No longer attempting to retry.")
+                raise Exception('No longer attempting to retry.')
 
             max_sleep = 2 ** retry
             sleep_seconds = random.random() * max_sleep
-            print("Sleeping %f seconds and then retrying..." % sleep_seconds)
+            log_info('Sleeping %f seconds and then retrying...' % sleep_seconds)
             time.sleep(sleep_seconds)
     return video_id
 
 
-def initialize_upload(youtube, youtube_partner, video: VideoModel, content_owner_id, channel_id):
+def upload(youtube, video: VideoModel, content_owner_id, channel_id):
     """ initialized the youtube video upload. This
     mechanism uses the youtube partner authentication / client
     and is only able to upload videos to a multi channel
@@ -174,31 +191,24 @@ def initialize_upload(youtube, youtube_partner, video: VideoModel, content_owner
     return resumable_upload(insert_request)
 
 
-def log_video_state(youtube_video_id):
-    """ Function to log the state of a video already uploaded to video.
-    If a video is already uploaded to youtube, the connector will not upload it
-    again. Instead it will
+def upload_thumbnail_for_video_if_exists(youtube, content_owner, image_filename, yt_video_id):
     """
-    youtube = youtube_inst()[0]
-    result = youtube.videos().list(
-        part='status',
-        id=youtube_video_id
-    ).execute()
-    video = result['items'][0]
-    log_debug('Youtube %s already uploaded: Privacy Status: %s' % (youtube_video_id, video['status']['privacyStatus']))
-    log_debug('Youtube %s already uploaded: Upload Status: %s' % (youtube_video_id, video['status']['uploadStatus']))
-    log_debug('Youtube %s already uploaded: License Status: %s' % (youtube_video_id, video['status']['license']))
+    Set a thumbnail for an existing video.
 
-
-def check_video_upload_successful(youtube_video_id):
-    youtube, youtube_partner = youtube_inst()
-
-    response = youtube.videos().list(
-        part='status',
-        id=youtube_video_id
-    ).execute()
-
-    log_info('upload for video %s has status %s' % (youtube_video_id, response['status']['uploadStatus']))
+    :param youtube: the youtube connection
+    :param content_owner: id of content owner
+    :param image_filename: path of thumbnail tu set
+    :param yt_video_id: youtube id of video
+    :return:
+    """
+    if image_filename:
+        youtube.thumbnails().set(
+            videoId=yt_video_id,
+            media_body=image_filename,
+            onBehalfOfContentOwner=content_owner
+        ).execute()
+    else:
+        log_info("No thumbnail for youtube video id %s" % yt_video_id)
 
 
 def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
@@ -209,29 +219,34 @@ def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
     errors are logged into a mongo db collection.
     """
 
+    if registry.target_platform_video_id or registry.intermediate_state != 'uploading':
+        raise Exception('Upload not triggered because registry %s is not in correct state' % registry.registry_id)
+
     try:
         mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
         youtube, youtube_partner = youtube_inst()
         content_owner = get_content_owner_id(youtube_partner)
-        video_id = initialize_upload(youtube, youtube_partner, video, content_owner, mapping.target_id)
+        video_id = upload(youtube, video, content_owner, mapping.target_id)
 
-        if video_id is None or video_id == '':
+        if video_id and video_id != '':
+            upload_thumbnail_for_video_if_exists(youtube, content_owner, video.image_filename, video_id)
+
             registry.target_platform_video_id = video_id
-            registry.set_state_and_persist("active")
+            registry.set_state_and_persist('active')
         else:
-            raise Exception("Upload failed, no youtube_id responded for registry %s" % registry.registry_id)
+            raise Exception('Upload failed, no youtube_id responded for registry %s' % registry.registry_id)
         return video_id
     except Exception as e:
-        raise Exception("Error uploading video of registry entry %s to youtube." % registry.registry_id, e)
+        raise Exception('Error uploading video of registry entry %s to youtube.' % registry.registry_id, e)
 
 
 def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
     """ Update metadata of video on youtube. """
     if registry.target_platform_video_id is None or registry.intermediate_state != 'updating':
-        raise Exception("Upload not triggered because registry %s is not in correct state" % registry.registry_id)
+        raise Exception('Upload not triggered because registry %s is not in correct state' % registry.registry_id)
 
     if video.hash_code == registry.video_hash_code:
-        log_info("Metadata of registry entry %s not changed, so no update needed." % registry.registry_id)
+        log_info('Metadata of registry entry %s not changed, so no update needed.' % registry.registry_id)
         return
 
     youtube_id = registry.target_platform_video_id
@@ -240,34 +255,37 @@ def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
         raise UpdateError('Youtube_id not found for ' + registry.registry_id)
 
     try:
-        youtube = youtube_inst()
+        youtube, youtube_partner = youtube_inst()
 
-        video_list_response = youtube[0].videos().list(
+        video_list_response = youtube.videos().list(
             id=youtube_id,
             part='snippet'
         ).execute()
         if not video_list_response['items']:
             raise UpdateError('Video not found for id ' + youtube_id)
 
-        video_list_snippet = video_list_response['items'][0]['snippet']
-        video_list_snippet['title'] = video.title
-        video_list_snippet['description'] = video.description
-        video_list_snippet['categoryId'] = 22
+        video_metadata = video_list_response['items'][0]['snippet']
 
-        if "tags" not in video_list_snippet:
-            video_list_snippet["tags"] = []
-        video_list_snippet["tags"].append([])
+        video_remote_hash = create_metadata_hash(video_metadata)
 
-        youtube[0].videos().update(
+        if registry.video_hash_code != video_remote_hash:
+            log_info('Metadata of video %s was changed on facebook. No update allowed.' % registry.registry_id)
+            return
+
+        video_metadata['title'] = video.title
+        video_metadata['description'] = video.description
+        video_metadata['tags'] = video.keywords
+
+        youtube.videos().update(
             part='snippet',
-            onBehalfOfContentOwner=get_content_owner_id(youtube[1]),
+            onBehalfOfContentOwner=get_content_owner_id(youtube_partner),
             body=dict(
-                snippet=video_list_snippet,
+                snippet=video_metadata,
                 id=youtube_id
             )
         ).execute()
     except Exception as e:
-        raise Exception("Error updating video of registry entry %s on youtube." % registry.registry_id, e)
+        raise Exception('Error updating video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
 def unpublish_video_on_youtube(video: VideoModel, registry: RegistryModel):
@@ -276,34 +294,34 @@ def unpublish_video_on_youtube(video: VideoModel, registry: RegistryModel):
 
     """
     if registry.target_platform_video_id is None or registry.intermediate_state not in ('unpublishing', 'deleting'):
-        raise Exception("Unpublishing not triggered because registry %s is not in correct state" % registry.registry_id)
+        raise Exception('Unpublishing not triggered because registry %s is not in correct state' % registry.registry_id)
 
     youtube_id = registry.target_platform_video_id
 
     if youtube_id is None:
         raise UnpublishError('Youtube_id not found for ' + registry.registry_id)
     try:
-        youtube = youtube_inst()
+        youtube, youtube_partner = youtube_inst()
 
-        video_list_response = youtube[0].videos().list(
+        video_list_response = youtube.videos().list(
             id=youtube_id,
             part='status'
         ).execute()
         if not video_list_response['items']:
-            raise UnpublishError('Video with id ' + youtube_id + " not found on youtube.")
+            raise UnpublishError('Video with id %s not found on youtube.' % youtube_id)
 
         video_list_snippet = video_list_response['items'][0]['status']
         video_list_snippet['privacyStatus'] = 'private'
-        youtube[0].videos().update(
+        youtube.videos().update(
             part='status',
-            onBehalfOfContentOwner=get_content_owner_id(youtube[1]),
+            onBehalfOfContentOwner=get_content_owner_id(youtube_partner),
             body=dict(
                 status=video_list_snippet,
                 id=youtube_id
             )
         ).execute()
     except Exception as e:
-        raise Exception("Error unpublishing video of registry entry %s on youtube." % registry.registry_id, e)
+        raise Exception('Error unpublishing video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
 def delete_video_on_youtube(video: VideoModel, registry: RegistryModel):
