@@ -9,6 +9,7 @@ ADD requirements.txt /requirements.txt
 ADD entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
+RUN mkdir log
 
 RUN ["make", "init"]
 EXPOSE 5000
