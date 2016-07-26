@@ -9,7 +9,7 @@ version "1.0.0." + (System.getenv("BUILD_NUMBER") ?: "0") + "-BETA"
 ext {
     localDockerHost = "192.168.99.100:2376"
     registryHost = "10.71.104.172:5000"
-    image_name = 'platform-connector'
+    image_name = 'platform-connectors'
 
     defaultCertPath = System.getProperty('docker.cert.path') ?: "${System.getProperty('user.home')}/.docker/machine/machines/default"
 }
@@ -36,7 +36,7 @@ task copyDockerfile(type: Copy) {
 }
 
 task rmImage(type: DockerRmiTask) {
-    imageId = image_name + ":" + version
+    imageId = image_name + ":dev"
 }
 
 task rmImageLatest(type: DockerRmiTask) {
@@ -45,7 +45,7 @@ task rmImageLatest(type: DockerRmiTask) {
 
 task buildImage(type: DockerBuildTask) {
     dependsOn rmImage, rmImageLatest, copyDockerfile
-    imageName = image_name + ":" + version
+    imageName = image_name + ":dev"
 
     buildContextDirectory = file("./build/docker")
 }
@@ -54,7 +54,7 @@ task tagImage(type: DockerTagTask) {
     dependsOn buildImage
 
     force = true
-    imageId = image_name + ":" + version
+    imageId = image_name + ":dev"
     tag = registryHost + "/" + image_name + ":" + version
 }
 
@@ -63,7 +63,7 @@ task tagImageLatest(type: DockerTagTask) {
     dependsOn buildImage
 
     force = true
-    imageId = image_name + ":" + version
+    imageId = image_name + ":dev"
     tag = registryHost + "/" + image_name + ":latest"
 }
 
@@ -93,7 +93,7 @@ task rmContainer(type: DockerRmTask) {
 
 task runContainer(type: DockerRunTask) {
     dependsOn rmContainer
-    imageName = image_name + ":" + version
+    imageName = image_name + ":dev"
     containerName = image_name
     env = [
             "CONNECTOR_MONGO_DB=mongodb://mongo:27017/",
