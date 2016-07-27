@@ -145,7 +145,7 @@ class VideoModel(object):
             video.description = video_dict['text'] if 'text' in video_dict else ''
             video.keywords = video_dict['tags'].split(',') if 'tags' in video_dict and video_dict['tags'] else []
             video.keywords = [keyword.strip() for keyword in video.keywords]
-            video.download_url = video_dict['downloadUrl']
+            video.download_url = video_dict['flavourSourceUrl']
             video.image_id = video_dict['imageid'] if 'imageid' in video_dict else None
             video_hash_code = hashlib.md5()
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
