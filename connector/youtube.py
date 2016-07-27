@@ -186,7 +186,8 @@ def upload(youtube, video: VideoModel, content_owner_id, channel_id):
         body=body,
         onBehalfOfContentOwner=content_owner_id,
         onBehalfOfContentOwnerChannel=channel_id,
-        media_body=MediaFileUpload(video.filename, chunksize=-1, resumable=True)
+        # chunk size: 100
+        media_body=MediaFileUpload(video.filename, chunksize=100*1024*1024, resumable=True)
     )
     return resumable_upload(insert_request)
 
