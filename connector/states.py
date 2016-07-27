@@ -79,7 +79,7 @@ class Uploading(object):
             self.next_state.run()
         except Exception:
             log_error('Cannot perform target platform upload of video with id %s and registry id %s.' % (
-            self.registry_model.registry_id, self.registry_model.video_id))
+                self.registry_model.registry_id, self.registry_model.video_id))
             self._fire_error()
 
     @classmethod
