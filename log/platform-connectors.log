@@ -1,0 +1,6 @@
+{"message": " * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)"}
+{"message": "Going to execute update / upload for registry id 1_8tdbn5z5-cat", "level": "Debug", "request_id": null, "thread_name": "MainThread", "hostname": "ubuntu", "timestamp": "2016-07-26 15:38:54.862641"}
+{"message": "Creating registry model from registry id 1_8tdbn5z5-cat.", "level": "Debug", "request_id": null, "thread_name": "MainThread", "hostname": "ubuntu", "timestamp": "2016-07-26 15:38:54.863127"}
+{"message": "retrieving registry collection...", "level": "Debug", "request_id": null, "thread_name": "MainThread", "hostname": "ubuntu", "timestamp": "2016-07-26 15:38:54.864038"}
+{"message": "Exception: Cannot create registry model for registry id 1_8tdbn5z5-cat.", "level": "Debug", "request_id": null, "thread_name": "MainThread", "hostname": "ubuntu", "timestamp": "2016-07-26 15:39:24.937832"}
+{"message": "127.0.0.1 - - [26/Jul/2016 15:39:24] \"GET /update/1_8tdbn5z5-cat HTTP/1.1\" 200 -"}

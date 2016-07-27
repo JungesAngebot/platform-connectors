@@ -1,5 +1,7 @@
 import hashlib
 import os
+import traceback
+import uuid
 
 from bson import ObjectId
 from commonspy.logging import log_error, log_debug
@@ -75,6 +77,7 @@ class RegistryModel(object):
         try:
             collection.save(self._to_dict())
         except Exception as e:
+            traceback.print_exc()
             raise Exception('Cannot update state of registry item with id %s.' % self.registry_id) from e
 
     def _to_dict(self):
@@ -113,6 +116,7 @@ class RegistryModel(object):
             log_debug('Loaded registry entry with id %s successfully.' % registry_id)
             return obj
         except Exception as e:
+            traceback.print_exc()
             raise Exception('Cannot create registry model for registry id %s.' % registry_id) from e
 
 
@@ -141,22 +145,24 @@ class VideoModel(object):
             video.description = video_dict['text'] if 'text' in video_dict else ''
             video.keywords = video_dict['tags'].split(',') if 'tags' in video_dict and video_dict['tags'] else []
             video.keywords = [keyword.strip() for keyword in video.keywords]
-            video.filename = '%s.mpeg' % video_id
-            video.image_filename = '%s.png' % video_id
             video.download_url = video_dict['downloadUrl']
             video.image_id = video_dict['imageid'] if 'imageid' in video_dict else None
             video_hash_code = hashlib.md5()
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
             video_hash_code.update(bytes(video.description.encode('UTF-8')))
             video.hash_code = video_hash_code.hexdigest()
+            video.filename = '%s-%s.mpeg' % (video_id, str(uuid.uuid4()))
+            video.image_filename = '%s-%s.png' % (video_id, str(uuid.uuid4()))
             log_debug('Loaded video model with id %s successfully.' % video_id)
             return video
         except Exception as e:
+            traceback.print_exc()
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
 
 
 def persist_video_image_on_disk(video_model: VideoModel):
     log_debug('Going to store thumbnail with id %s on disk...' % video_model.image_id)
+
     image_id = video_model.image_id
     database = MongoDbFactory.einszwo_internal_database()
     try:
@@ -168,8 +174,10 @@ def persist_video_image_on_disk(video_model: VideoModel):
         with open(video_model.image_filename, 'wb') as file:
             file.write(result.read())
     except Exception as e:
-        raise Exception('Cannot read image with id %s. GridFS connection not working' %
-                        image_id) from e
+        traceback.print_exc()
+        video_id = video_model.image_id
+        raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (
+            image_id, video_id)) from e
 
 
 class MappingModel(object):
@@ -192,5 +200,6 @@ class MappingModel(object):
             mapping.category_id = mapping_dict['category_id']
             return mapping
         except Exception as e:
+            traceback.print_exc()
             log_error('Cannot retrieve mapping with id %s from mapping collection.' % mapping_id)
             raise Exception('Cannot retrieve video with id %s from asset collection.' % mapping_id) from e
