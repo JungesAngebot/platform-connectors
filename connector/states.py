@@ -1,4 +1,5 @@
 import os
+import traceback
 import urllib.request
 
 from commonspy.logging import log_error
@@ -15,6 +16,7 @@ class Error(object):
         try:
             self.registry_model.set_state_and_persist('error')
         except Exception:
+            traceback.print_exc()
             log_error('Error while processing video.')
 
     @classmethod
@@ -38,6 +40,7 @@ class Downloading(object):
         try:
             self.download_binary_from_kaltura_to_disk(download_url, filename)
         except OSError as e:
+            traceback.print_exc()
             log_error('Cannot download binary with url %s.' % download_url)
             raise Exception('Cannot download binary with url %s.' % download_url) from e
 
@@ -50,6 +53,7 @@ class Downloading(object):
             self.registry_model.update_video_hash_code(video_model.hash_code)
             self._next_state(video_model)
         except Exception as e:
+            traceback.print_exc()
             log_error('Cannot finish download of binary from kaltura. %s' % str(e))
             self.fire_error()
 
@@ -80,6 +84,7 @@ class Uploading(object):
         except Exception:
             log_error('Cannot perform target platform upload of video with id %s and registry id %s.' % (
                 self.registry_model.registry_id, self.registry_model.video_id))
+            traceback.print_exc()
             self._fire_error()
 
     @classmethod
@@ -107,6 +112,7 @@ class Active(object):
             self.registry_model.set_state_and_persist('active')
             self._cleanup()
         except Exception:
+            traceback.print_exc()
             log_error('Cannot set state to active.')
             self._fire_error()
 
@@ -134,6 +140,7 @@ class Updating(object):
                                                           self.registry_model)
             self.next_state.run()
         except Exception:
+            traceback.print_exc()
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
             log_error('Unable to update video with id %s and registry id %s.' % (video_id, registry_id))
@@ -163,6 +170,7 @@ class Unpublish(object):
                                                           self.registry_model)
             self.next_state.run()
         except Exception:
+            traceback.print_exc()
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
             log_error('Cannot unpublish video with id %s and registry id %s.' % (video_id, registry_id))
@@ -218,6 +226,7 @@ class Deleting(object):
                                                           self.registry_model)
             self.next_state.run()
         except Exception:
+            traceback.print_exc()
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
             log_error('Cannot delete video with id %s and registry id %s.' % (video_id, registry_id))
@@ -244,6 +253,7 @@ class Deleted(object):
             self.registry_model.set_state_and_persist('deleted')
             self._cleanup()
         except Exception:
+            traceback.print_exc()
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
             log_error('Cannot set video with id %s and registry id %s to deleted.' % (video_id, registry_id))
