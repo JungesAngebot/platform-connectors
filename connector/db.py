@@ -1,6 +1,7 @@
 import hashlib
 import os
 import traceback
+import uuid
 
 from bson import ObjectId
 from commonspy.logging import log_error, log_debug
@@ -150,8 +151,8 @@ class VideoModel(object):
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
             video_hash_code.update(bytes(video.description.encode('UTF-8')))
             video.hash_code = video_hash_code.hexdigest()
-            video.filename = '%s.mpeg' % video.hash_code
-            video.image_filename = '%s.png' % video.hash_code
+            video.filename = '%s-%s.mpeg' % (video_id, str(uuid.uuid4()))
+            video.image_filename = '%s-%s.png' % (video_id, str(uuid.uuid4()))
             log_debug('Loaded video model with id %s successfully.' % video_id)
             return video
         except Exception as e:
