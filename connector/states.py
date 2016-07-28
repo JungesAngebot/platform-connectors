@@ -180,7 +180,7 @@ class Unpublish(object):
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'unpublish', video_model,
                                                           self.registry_model)
-            log_debug('Entering unpublish state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Finished unpublish state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
         except Exception:
             traceback.print_exc()
@@ -204,8 +204,10 @@ class Inactive(object):
 
     def run(self):
         try:
+            log_debug('Entering inactive state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_state_and_persist('inactive')
             self._cleanup()
+            log_debug('Finished inactive state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
         except Exception:
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
@@ -233,10 +235,12 @@ class Deleting(object):
 
     def run(self):
         try:
+            log_debug('Entering deleting state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_intermediate_state_and_persist('deleting')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'delete', video_model,
                                                           self.registry_model)
+            log_debug('Finished deleting state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
         except Exception:
             traceback.print_exc()
@@ -263,8 +267,10 @@ class Deleted(object):
 
     def run(self):
         try:
+            log_debug('Entering deleted state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_state_and_persist('deleted')
             self._cleanup()
+            log_debug('Finished deleted state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
         except Exception:
             traceback.print_exc()
             registry_id = self.registry_model.registry_id
