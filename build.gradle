@@ -18,15 +18,16 @@ task deleteBuild(type: Delete) {
     delete 'build'
 
 }
+
 task copyConnector(type: Copy) {
     dependsOn deleteBuild
     from('./connector')
-    from('./config')
     into './build/docker/connector'
 }
 
 task copyConfig(type: Copy) {
     dependsOn deleteBuild
+    from('./config')
     into './build/docker/config'
 }
 
