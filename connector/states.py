@@ -82,9 +82,11 @@ class Uploading(object):
 
     def run(self, video):
         try:
+            log_debug('Entering uploading state for video with id %s to platform %s.' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_intermediate_state_and_persist('uploading')
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video,
                                                           self.registry_model)
+            log_debug('Finished upload of video with registry id %s to platform %s.' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
         except Exception:
             log_error('Cannot perform target platform upload of video with id %s and registry id %s.' % (
