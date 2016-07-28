@@ -4,6 +4,7 @@ RUN apt-get update
 RUN apt-get --yes --force-yes dist-upgrade
 ADD connector /connector
 ADD *.py /
+ADD config /config
 ADD Makefile /Makefile
 ADD requirements.txt /requirements.txt
 ADD entrypoint.sh /entrypoint.sh
