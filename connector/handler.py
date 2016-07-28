@@ -22,7 +22,8 @@ def update_request(registry_id):
         if registry_model.status == 'notified':
             log_info('New video detected. Starting upload workflow. registry id: %s' % registry_id)
             Downloading.create_downloading_state(registry_model).run()
-#        elif registry_model.status == 'active':
+        elif registry_model.status == 'active':
+            log_info('Updating an existing video is currently not supported. Ignoring request. registry id: %s' % registry_id)
 #            log_info('Existing video will be updated. registry id: %s' % registry_id)
 #            Updating.create_updating_state(registry_model).run()
         elif registry_model.status == 'inactive':
