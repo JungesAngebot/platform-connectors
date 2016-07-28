@@ -14,10 +14,11 @@ class Error(object):
 
     def run(self):
         try:
+            log_info('Setting state for registry entry %s to error.' % self.registry_model.registry_id)
             self.registry_model.set_state_and_persist('error')
         except Exception:
             traceback.print_exc()
-            log_error('Error while processing video.')
+            log_error('Error while processing video with registry id %s.' % self.registry_model.registry_id)
 
     @classmethod
     def create_error_state(cls, registry_model):
