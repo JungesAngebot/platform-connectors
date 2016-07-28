@@ -238,7 +238,7 @@ def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
             raise Exception('Upload failed, no youtube_id responded for registry %s' % registry.registry_id)
         return video_id
     except Exception as e:
-        raise Exception('Error uploading video of registry entry %s to youtube.' % registry.registry_id, e)
+        raise Exception('Error uploading video of registry entry %s to youtube.' % registry.registry_id) from e
 
 
 def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
