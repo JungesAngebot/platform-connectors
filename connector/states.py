@@ -2,7 +2,7 @@ import os
 import traceback
 import urllib.request
 
-from commonspy.logging import log_error, log_info
+from commonspy.logging import log_error, log_info, log_debug
 
 from connector.db import VideoModel, persist_video_image_on_disk
 from connector.platforms import PlatformInteraction
@@ -49,11 +49,13 @@ class Downloading(object):
 
     def run(self):
         try:
+            log_debug('Entering downloading state for registry id %s.' % self.registry_model.registry_id)
             self.registry_model.set_intermediate_state_and_persist('downloading')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self._download_binaries(video_model.download_url, video_model.filename)
             self.image_download(video_model)
             self.registry_model.update_video_hash_code(video_model.hash_code)
+            log_debug('Download of video with registry id %s successful.' % self.registry_model.registry_id)
             self._next_state(video_model)
         except Exception as e:
             traceback.print_exc()
