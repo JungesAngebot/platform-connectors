@@ -16,8 +16,9 @@ class Error(object):
         try:
             log_info('Setting state for registry entry %s to error.' % self.registry_model.registry_id)
             self.registry_model.set_state_and_persist('error')
-        except Exception:
+        except Exception as e:
             traceback.print_exc()
+            log_error(e.__traceback__)
             log_error('Error while processing video with registry id %s.' % self.registry_model.registry_id)
 
     @classmethod
@@ -44,6 +45,7 @@ class Downloading(object):
             log_info('Download of video from %s with filename %s finished.' % (download_url, filename))
         except OSError as e:
             traceback.print_exc()
+            log_error(e.__traceback__)
             log_error('Cannot download binary with url %s.' % download_url)
             raise Exception('Cannot download binary with url %s.' % download_url) from e
 
@@ -59,6 +61,7 @@ class Downloading(object):
             self._next_state(video_model)
         except Exception as e:
             traceback.print_exc()
+            log_error(e.__traceback__)
             log_error('Cannot finish download of binary from kaltura. %s' % str(e))
             self.fire_error()
 
@@ -88,9 +91,10 @@ class Uploading(object):
                                                           self.registry_model)
             log_debug('Finished upload of video with registry id %s to platform %s.' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
-        except Exception:
+        except Exception as e:
             log_error('Cannot perform target platform upload of video with id %s and registry id %s.' % (
                 self.registry_model.registry_id, self.registry_model.video_id))
+            log_error(e.__traceback__)
             traceback.print_exc()
             self._fire_error()
 
@@ -120,8 +124,9 @@ class Active(object):
             self.registry_model.set_state_and_persist('active')
             self._cleanup()
             log_debug('Finished processing for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
-        except Exception:
+        except Exception as e:
             traceback.print_exc()
+            log_error(e.__traceback__)
             log_error('Cannot set state to active.')
             self._fire_error()
 
@@ -150,8 +155,9 @@ class Updating(object):
                                                           self.registry_model)
             log_debug('Finished update state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
-        except Exception:
+        except Exception as e:
             traceback.print_exc()
+            log_error(e.__traceback__)
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
             log_error('Unable to update video with id %s and registry id %s.' % (video_id, registry_id))
@@ -182,8 +188,9 @@ class Unpublish(object):
                                                           self.registry_model)
             log_debug('Finished unpublish state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
-        except Exception:
+        except Exception as e:
             traceback.print_exc()
+            log_error(e.__traceback__)
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
             log_error('Cannot unpublish video with id %s and registry id %s.' % (video_id, registry_id))
@@ -208,7 +215,8 @@ class Inactive(object):
             self.registry_model.set_state_and_persist('inactive')
             self._cleanup()
             log_debug('Finished inactive state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
-        except Exception:
+        except Exception as e:
+            log_error(e.__traceback__)
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
             log_error('Cannot set state of video with id %s and registry id %s to inactive.' % (video_id, registry_id))
@@ -242,7 +250,8 @@ class Deleting(object):
                                                           self.registry_model)
             log_debug('Finished deleting state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
-        except Exception:
+        except Exception as e:
+            log_error(e.__traceback__)
             traceback.print_exc()
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
@@ -271,7 +280,8 @@ class Deleted(object):
             self.registry_model.set_state_and_persist('deleted')
             self._cleanup()
             log_debug('Finished deleted state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
-        except Exception:
+        except Exception as e:
+            log_error(e.__traceback__)
             traceback.print_exc()
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id

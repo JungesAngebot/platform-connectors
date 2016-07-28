@@ -37,7 +37,7 @@ def update_request(registry_id):
                 log_info('Retrying updating... registry id: %s' % registry_id)
                 Updating.create_updating_state(registry_model).run()
     except Exception as e:
-        log_error(e)
+        log_error(e.__traceback__)
         traceback.print_tb(e.__traceback__)
         return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})
@@ -52,7 +52,7 @@ def unpublish_request(registry_id):
             log_info('Unpublishing video... registry id: %s' % registry_id)
             Unpublish.create_unpublish_state(registry_model).run()
     except Exception as e:
-        log_error(e)
+        log_error(e.__traceback__)
         traceback.print_tb(e.__traceback__)
         return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})
@@ -65,7 +65,7 @@ def delete_request(registry_id):
         registry_model = RegistryModel.create_from_registry_id(registry_id)
         Deleting.create_deleting_state(registry_model).run()
     except Exception as e:
-        log_error(e)
+        log_error(e.__traceback__)
         traceback.print_tb(e.__traceback__)
         return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})
