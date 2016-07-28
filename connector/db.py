@@ -117,6 +117,7 @@ class RegistryModel(object):
             return obj
         except Exception as e:
             traceback.print_exc()
+            log_error(e.__traceback__)
             raise Exception('Cannot create registry model for registry id %s.' % registry_id) from e
 
 
@@ -157,6 +158,7 @@ class VideoModel(object):
             return video
         except Exception as e:
             traceback.print_exc()
+            log_error(e.__traceback__)
             raise Exception('Cannot retrieve video with id %s from asset collection.' % video_id) from e
 
 
@@ -176,6 +178,7 @@ def persist_video_image_on_disk(video_model: VideoModel):
     except Exception as e:
         traceback.print_exc()
         video_id = video_model.image_id
+        log_error(e.__traceback__)
         raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (
             image_id, video_id)) from e
 
@@ -200,6 +203,7 @@ class MappingModel(object):
             mapping.category_id = mapping_dict['category_id']
             return mapping
         except Exception as e:
+            log_error(e.__traceback__)
             traceback.print_exc()
             log_error('Cannot retrieve mapping with id %s from mapping collection.' % mapping_id)
             raise Exception('Cannot retrieve video with id %s from asset collection.' % mapping_id) from e
