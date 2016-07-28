@@ -148,7 +148,7 @@ class Updating(object):
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model,
                                                           self.registry_model)
-            log_debug('Finished update state for video with registy id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Finished update state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
         except Exception:
             traceback.print_exc()
@@ -175,10 +175,12 @@ class Unpublish(object):
 
     def run(self):
         try:
+            log_debug('Entering unpublish state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_intermediate_state_and_persist('unpublishing')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'unpublish', video_model,
                                                           self.registry_model)
+            log_debug('Entering unpublish state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
         except Exception:
             traceback.print_exc()
