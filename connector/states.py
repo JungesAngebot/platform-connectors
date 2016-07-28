@@ -2,7 +2,7 @@ import os
 import traceback
 import urllib.request
 
-from commonspy.logging import log_error
+from commonspy.logging import log_error, log_info
 
 from connector.db import VideoModel, persist_video_image_on_disk
 from connector.platforms import PlatformInteraction
@@ -38,7 +38,9 @@ class Downloading(object):
 
     def _download_binaries(self, download_url, filename):
         try:
+            log_info('Downloading video from %s with filename %s.' % (download_url, filename))
             self.download_binary_from_kaltura_to_disk(download_url, filename)
+            log_info('Download of video from %s with filename %s finished.' % (download_url, filename))
         except OSError as e:
             traceback.print_exc()
             log_error('Cannot download binary with url %s.' % download_url)
