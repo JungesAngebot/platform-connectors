@@ -1,7 +1,7 @@
 FROM python:3.5
 
 RUN apt-get update
-RUN apt-get --yes --force-yes upgrade
+RUN apt-get --yes --force-yes dist-upgrade
 ADD connector /connector
 ADD config /config
 ADD *.py /
