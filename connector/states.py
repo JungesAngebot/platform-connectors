@@ -116,8 +116,10 @@ class Active(object):
 
     def run(self):
         try:
+            log_debug('Entering active state for video with registry id %s for platform %s.' % (self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_state_and_persist('active')
             self._cleanup()
+            log_debug('Finished processing for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
         except Exception:
             traceback.print_exc()
             log_error('Cannot set state to active.')
