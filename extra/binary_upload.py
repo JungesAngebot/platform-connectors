@@ -12,7 +12,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from oauth2client.service_account import ServiceAccountCredentials
-
+httplib2.debuglevel = 4
 APP_ROOT = os.path.dirname(os.path.abspath(__file__)).replace(os.sep + 'extra', '')
 
 RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError,)
@@ -58,7 +58,7 @@ def content_owner_id(youtube_partner):
     except HttpError as e:
         raise Exception() from e
 
-    return content_owners_list_response
+    return content_owners_list_response['items'][0]['id']
 
 
 def resumable_upload(insert_request):
@@ -104,10 +104,10 @@ def upload():
     insert_request = youtube_instance()[0].videos().insert(
         part=','.join(body.keys()),
         body=body,
-        onBehalfOfContentOwner=content_owner_id,
+        onBehalfOfContentOwner=content_owner_id(youtube_instance()[1]),
         onBehalfOfContentOwnerChannel='UCMf4KYUStK86PiTd4An1jvg',
         # chunk size: 100
-        media_body=MediaFileUpload('binary', chunksize=100 * 1024 * 1024, resumable=True)
+        media_body=MediaFileUpload('binary', chunksize=256 * 1024 * 1024, resumable=True)
     )
 
     return resumable_upload(insert_request)
@@ -133,5 +133,5 @@ parser.add_argument('-url')
 args = parser.parse_args()
 
 if args.url:
-    urllib.request.urlretrieve(args.url, 'binary', reporthook)
+    # urllib.request.urlretrieve(args.url, 'binary', reporthook)
     upload()
