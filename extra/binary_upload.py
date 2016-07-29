@@ -6,6 +6,7 @@ import urllib.request
 import sys
 
 import httplib2
+from googleapiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__)).replace(os.sep + 'extra', '')
@@ -35,6 +36,14 @@ def youtube_instance():
         APP_ROOT + '/config/client_secrets.json', scopes=youtube_scopes
     )
 
+    http = httplib2.Http()
+    http = credentials.authorize(http)
+
+    youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, http=http)
+
+    youtube_partner = build(YOUTUBE_CONTENT_ID_API_SERVICE_NAME, YOUTUBE_CONTENT_ID_API_VERSION, http=http)
+
+    return youtube, youtube_partner
 
 
 def reporthook(block_num, block_size, total_size):
