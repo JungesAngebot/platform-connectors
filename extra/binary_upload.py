@@ -5,17 +5,17 @@ import urllib.request
 import sys
 
 
-def reporthook(blocknum, blocksize, totalsize):
-    readsofar = blocknum * blocksize
-    if totalsize > 0:
-        percent = readsofar * 1e2 / totalsize
+def reporthook(block_num, block_size, total_size):
+    read_so_far = block_num * block_size
+    if total_size > 0:
+        percent = read_so_far * 1e2 / total_size
         s = "\r%5.1f%% %*d / %d" % (
-            percent, len(str(totalsize)), readsofar, totalsize)
+            percent, len(str(total_size)), read_so_far, total_size)
         sys.stderr.write(s)
-        if readsofar >= totalsize:  # near the end
+        if read_so_far >= total_size:
             sys.stderr.write("\n")
-    else:  # total size is unknown
-        sys.stderr.write("read %d\n" % (readsofar,))
+    else:
+        sys.stderr.write("read %d\n" % (read_so_far,))
 
 
 parser = argparse.ArgumentParser()
