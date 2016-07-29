@@ -92,8 +92,8 @@ def resumable_upload(insert_request):
 def upload():
     body = dict(
         snippet=dict(
-            title='Upload test',
-            description='Description of upload test',
+            title='Upload test 2',
+            description='Description of upload test 2',
             categoryId=22
         ),
         status=dict(
