@@ -10,6 +10,7 @@ import httplib2
 import time
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload
 from oauth2client.service_account import ServiceAccountCredentials
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__)).replace(os.sep + 'extra', '')
@@ -88,6 +89,30 @@ def resumable_upload(insert_request):
     return video_id
 
 
+def upload():
+    body = dict(
+        snippet=dict(
+            title='Upload test',
+            description='Description of upload test',
+            categoryId=22
+        ),
+        status=dict(
+            privacyStatus='private'
+        )
+    )
+
+    insert_request = youtube_instance()[0].videos().insert(
+        part=','.join(body.keys()),
+        body=body,
+        onBehalfOfContentOwner=content_owner_id,
+        onBehalfOfContentOwnerChannel='UCMf4KYUStK86PiTd4An1jvg',
+        # chunk size: 100
+        media_body=MediaFileUpload('binary', chunksize=100*1024*1024, resumable=True)
+    )
+
+    return resumable_upload(insert_request)
+
+
 def reporthook(block_num, block_size, total_size):
     read_so_far = block_num * block_size
     if total_size > 0:
@@ -109,3 +134,4 @@ args = parser.parse_args()
 
 if args.url:
     urllib.request.urlretrieve(args.url, 'binary', reporthook)
+    upload()
