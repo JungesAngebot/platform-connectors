@@ -7,6 +7,7 @@ import sys
 
 import httplib2
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from oauth2client.service_account import ServiceAccountCredentials
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__)).replace(os.sep + 'extra', '')
@@ -44,6 +45,17 @@ def youtube_instance():
     youtube_partner = build(YOUTUBE_CONTENT_ID_API_SERVICE_NAME, YOUTUBE_CONTENT_ID_API_VERSION, http=http)
 
     return youtube, youtube_partner
+
+
+def content_owner_id(youtube_partner):
+    try:
+        content_owners_list_response = youtube_partner.contentOwners().list(
+            fetchMine=True
+        ).execute()
+    except HttpError as e:
+        raise Exception() from e
+
+    return content_owners_list_response
 
 
 def reporthook(block_num, block_size, total_size):
