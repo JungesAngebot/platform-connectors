@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import random
 import urllib.request
 
 import sys
 
 import httplib2
+import time
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from oauth2client.service_account import ServiceAccountCredentials
@@ -56,6 +58,34 @@ def content_owner_id(youtube_partner):
         raise Exception() from e
 
     return content_owners_list_response
+
+
+def resumable_upload(insert_request):
+    response = None
+    error = None
+    retry = 0
+    video_id = None
+
+    while response is None:
+        try:
+            status, response = insert_request.next_chunk()
+            if 'id' in response:
+                video_id = response['id']
+        except HttpError as e:
+            if e.resp.status in RETRIABLE_STATUS_CODES:
+                pass
+            else:
+                raise
+        except RETRIABLE_EXCEPTIONS as e:
+            pass
+        if error is not None:
+            retry += 1
+            if retry > 10:
+                exit(-1)
+            max_sleep = 2 ** retry
+            sleep_seconds = random.random() * max_sleep
+            time.sleep(sleep_seconds)
+    return video_id
 
 
 def reporthook(block_num, block_size, total_size):
