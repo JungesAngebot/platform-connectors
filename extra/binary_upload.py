@@ -1,8 +1,40 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import urllib.request
 
 import sys
+
+import httplib2
+from oauth2client.service_account import ServiceAccountCredentials
+
+APP_ROOT = os.path.dirname(os.path.abspath(__file__)).replace(os.sep + 'extra', '')
+
+RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError,)
+
+# Always retry when an apiclient.errors.HttpError with one of these status
+# codes is raised.
+RETRIABLE_STATUS_CODES = (500, 502, 503, 504,)
+
+INVALID_CREDENTIALS = b"Invalid Credentials"
+YOUTUBE_API_SERVICE_NAME = 'youtube'
+YOUTUBE_API_VERSION = 'v3'
+YOUTUBE_CONTENT_ID_API_SERVICE_NAME = 'youtubePartner'
+YOUTUBE_CONTENT_ID_API_VERSION = 'v1'
+
+youtube_scopes = (
+    'https://www.googleapis.com/auth/youtube',
+    'https://www.googleapis.com/auth/youtube.upload',
+    'https://www.googleapis.com/auth/youtubepartner',
+    'https://www.googleapis.com/auth/youtube.force-ssl'
+)
+
+
+def youtube_instance():
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        APP_ROOT + '/config/client_secrets.json', scopes=youtube_scopes
+    )
+
 
 
 def reporthook(block_num, block_size, total_size):
