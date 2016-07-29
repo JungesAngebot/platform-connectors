@@ -107,7 +107,7 @@ def upload():
         onBehalfOfContentOwner=content_owner_id,
         onBehalfOfContentOwnerChannel='UCMf4KYUStK86PiTd4An1jvg',
         # chunk size: 100
-        media_body=MediaFileUpload('binary', chunksize=100*1024*1024, resumable=True)
+        media_body=MediaFileUpload('binary', chunksize=100 * 1024 * 1024, resumable=True)
     )
 
     return resumable_upload(insert_request)
