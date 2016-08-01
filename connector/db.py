@@ -10,6 +10,7 @@ from pymongo import MongoClient
 
 from config import CONNECTOR_MONGO_DB, ASSET_MONGO_DB, CONNECTOR_DB, CONNECTOR_REGISTRY, CONNECTOR_MAPPINGS, ASSET_DB, \
     ASSETS
+from connector import external_client, internal_client
 
 
 class MongoDbFactory(object):
@@ -21,8 +22,7 @@ class MongoDbFactory(object):
 
     @staticmethod
     def _create_mongo_db_client_for_system(system):
-        url = MongoDbFactory._mongo_connection_url(system)
-        return MongoClient(url)
+        return internal_client if system == 'internal' else external_client
 
     @staticmethod
     def connector_registry_collection():
