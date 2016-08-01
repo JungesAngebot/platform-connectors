@@ -41,7 +41,10 @@ class Downloading(object):
     def _download_binaries(self, download_url, filename):
         try:
             log_info('Downloading video from %s with filename %s.' % (download_url, filename))
-            self.download_binary_from_kaltura_to_disk(download_url, filename)
+            if download_url is not None:
+                self.download_binary_from_kaltura_to_disk(download_url, filename)
+            else:
+                raise Exception('No flavor source url provided for %s.' % filename)
             log_info('Download of video from %s with filename %s finished.' % (download_url, filename))
         except OSError as e:
             traceback.print_exc()
