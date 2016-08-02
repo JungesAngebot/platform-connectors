@@ -51,22 +51,22 @@ def create_test_video_model():
 
     return video
 
+
 class MediaUploadMock:
     def __init__(self, *args, **kwargs):
         pass
 
-class MockResponse:
-    def __init__(self, json_data, status_code):
-        self.json_data = json_data
-        self.status_code = status_code
 
-    def json(self):
-        return self.json_data
+class ExecCounter:
+    count = 0
+
+
+youtube_client_exec_count = ExecCounter()
 
 
 class MockYoutubeClient:
     def __init__(self):
-        pass
+        self.exec_count = youtube_client_exec_count
 
     def json(self):
         return self.json_data
@@ -74,21 +74,61 @@ class MockYoutubeClient:
     def contentOwners(self):
         return self
 
-    def list(self, fetchMine):
+    def list(self, *args, **kwargs):
         return self
 
     def execute(self):
+        self.exec_count.count += 1
         return {'items': [{'id': '1234'}]}
 
     def videos(self):
         return self
 
     def insert(self, *args, **kwargs):
-        return MockResponse(200, {'id': '567'})
+        return self
+
+    def next_chunk(self):
+        return 200, {'id': '567'}
+
+
+class MockYoutubeClientWithError(MockYoutubeClient):
+    def next_chunk(self):
+        return 400, {'error': 'something bad hapens'}
+
+
+class MockYoutubeUpdateClient(MockYoutubeClient):
+    def update(self, *args, **kwargs):
+        return self
+
+    def execute(self):
+        self.exec_count.count += 1
+        return {'items': [{'snippet': {'title': 'Test-Title', 'description': 'Test-Description'},
+                           'status': {'privacyStatus': 'public'}}]}
+
+
+class MockYoutubeUpdateClientWithError(MockYoutubeClient):
+    def update(self, *args, **kwargs):
+        return self
+
+    def execute(self):
+        self.exec_count.count += 1
+        raise Exception('Mock')
 
 
 def mocked_youtube_inst(*args, **kwargs):
     return MockYoutubeClient(), MockYoutubeClient()
+
+
+def mocked_youtube_inst_with_error_response(*args, **kwargs):
+    return MockYoutubeClientWithError(), MockYoutubeClientWithError()
+
+
+def mocked_youtube_update_inst(*args, **kwargs):
+    return MockYoutubeUpdateClient(), MockYoutubeClient()
+
+
+def mocked_youtube_update_inst_with_error_response(*args, **kwargs):
+    return MockYoutubeUpdateClientWithError(), MockYoutubeClient()
 
 
 class DbFactoryMock(MongoDbFactory):
@@ -106,23 +146,23 @@ class DbFactoryMock(MongoDbFactory):
 
 
 class YoutubeUploadTest(unittest.TestCase):
-    @mock.patch('googleapiclient.http.MediaFileUpload', new=MediaUploadMock())
+    @mock.patch('builtins.open')
     @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_inst)
-    def test_success_with_thumb(self, mock_youtube):
+    def test_success_with_thumb(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
-
+        youtube_client_exec_count.count = 0
         registry = create_test_registry_model()
         video = create_test_video_model()
 
         upload_video_to_youtube(video, registry)
-        self.assertEquals('321', registry.target_platform_video_id)
+        self.assertEquals('567', registry.target_platform_video_id)
         self.assertEquals('active', registry.status)
+        self.assertEqual(youtube_client_exec_count.count, 1)
 
-
-"""
-    @mock.patch('youtube.youtube_inst', side_effect=mocked_youtube_inst)
-    def test_success_without_thumb(self, mock_post):
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_inst)
+    def test_success_without_thumb(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
 
@@ -131,11 +171,12 @@ class YoutubeUploadTest(unittest.TestCase):
         video.image_filename = None
 
         upload_video_to_youtube(video, registry)
-        self.assertEquals('321', registry.target_platform_video_id)
+        self.assertEquals('567', registry.target_platform_video_id)
         self.assertEquals('active', registry.status)
 
-    @mock.patch('youtube.youtube_inst', side_effect=mocked_youtube_inst)
-    def test_req_error(self, mock_post):
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_inst_with_error_response)
+    def test_req_error(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
 
@@ -146,8 +187,9 @@ class YoutubeUploadTest(unittest.TestCase):
         with self.assertRaises(Exception):
             upload_video_to_youtube(video, registry)
 
-    @mock.patch('youtube.youtube_inst', side_effect=mocked_youtube_inst)
-    def test_error_if_platform_id_is_set(self, mock_post):
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_inst)
+    def test_error_if_platform_id_is_set(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
 
@@ -158,8 +200,9 @@ class YoutubeUploadTest(unittest.TestCase):
         with self.assertRaises(Exception):
             upload_video_to_youtube(video, registry)
 
-    @mock.patch('youtube.youtube_inst', side_effect=mocked_youtube_inst)
-    def test_error_if_intermediate_state_not_valid(self, mock_post):
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_inst)
+    def test_error_if_intermediate_state_not_valid(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
 
@@ -172,11 +215,12 @@ class YoutubeUploadTest(unittest.TestCase):
 
 
 class YoutubeUpdateTest(unittest.TestCase):
-
-    @mock.patch('youtube.youtube_inst', side_effect=mocked_youtube_inst)
-    def test_success(self, mock_post):
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_update_inst)
+    def test_success(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
+        youtube_client_exec_count.count = 0
 
         registry = create_test_registry_model()
         registry.intermediate_state = 'updating'
@@ -185,15 +229,14 @@ class YoutubeUpdateTest(unittest.TestCase):
         video = create_test_video_model()
 
         update_video_on_youtube(video, registry)
-        self.assertIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
-                                {'access_token': '1234', 'description': 'Test-Description', 'name': 'Test-Title'}),
-                      mock_post.call_args_list)
+        self.assertEqual(youtube_client_exec_count.count, 3)
 
-    @mock.patch('youtube', side_effect=mocked_req_update_success)
-    @mock.patch('requests.get', side_effect=mocked_req_update_success)
-    def test_error_if_target_platform_video_id_not_set(self, mock_get, mock_post):
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_update_inst)
+    def test_error_if_target_platform_video_id_not_set(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
+        youtube_client_exec_count.count = 0
 
         registry = create_test_registry_model()
         registry.intermediate_state = 'updating'
@@ -204,81 +247,85 @@ class YoutubeUpdateTest(unittest.TestCase):
         with self.assertRaises(Exception):
             update_video_on_youtube(video, registry)
 
+        self.assertEqual(youtube_client_exec_count.count, 0)
 
-@mock.patch('requests.post', side_effect=mocked_req_update_success)
-@mock.patch('requests.get', side_effect=mocked_req_update_success)
-def test_error_if_intermediate_state_wrong(self, mock_get, mock_post):
-    MappingModel.db_factory = DbFactoryMock
-    RegistryModel.db_factory = DbFactoryMock
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_update_inst)
+    def test_error_if_intermediate_state_wrong(self, mock_youtube, mock_open):
+        MappingModel.db_factory = DbFactoryMock
+        RegistryModel.db_factory = DbFactoryMock
+        youtube_client_exec_count.count = 0
 
-    registry = create_test_registry_model()
-    registry.intermediate_state = 'downloading'
-    registry.target_platform_video_id = '1'
-    registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
-    video = create_test_video_model()
+        registry = create_test_registry_model()
+        registry.intermediate_state = 'downloading'
+        registry.target_platform_video_id = '1'
+        registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
+        video = create_test_video_model()
 
-    with self.assertRaises(Exception):
+        with self.assertRaises(Exception):
+            update_video_on_youtube(video, registry)
+
+        self.assertEqual(youtube_client_exec_count.count, 0)
+
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_update_inst_with_error_response)
+    def test_error_if_request_error(self, mock_youtube, mock_open):
+        MappingModel.db_factory = DbFactoryMock
+        RegistryModel.db_factory = DbFactoryMock
+        youtube_client_exec_count.count = 0
+
+        registry = create_test_registry_model()
+        registry.intermediate_state = 'updating'
+        registry.target_platform_video_id = '1'
+        registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
+        video = create_test_video_model()
+
+        with self.assertRaises(Exception):
+            update_video_on_youtube(video, registry)
+
+        self.assertEqual(youtube_client_exec_count.count, 1)
+
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_update_inst)
+    def test_do_nothing_if_video_hash_equal_to_registry_hash(self, mock_youtube, mock_open):
+        MappingModel.db_factory = DbFactoryMock
+        RegistryModel.db_factory = DbFactoryMock
+        youtube_client_exec_count.count = 0
+
+        registry = create_test_registry_model()
+        registry.intermediate_state = 'updating'
+        registry.target_platform_video_id = '1'
+        registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
+        video = create_test_video_model()
+        video.hash_code = registry.video_hash_code
+
         update_video_on_youtube(video, registry)
+        self.assertEqual(youtube_client_exec_count.count, 0)
 
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_update_inst)
+    def test_do_nothing_if_remote_hash_not_equal_to_registry_hash(self, mock_youtube, mock_open):
+        MappingModel.db_factory = DbFactoryMock
+        RegistryModel.db_factory = DbFactoryMock
+        youtube_client_exec_count.count = 0
 
-@mock.patch('requests.post', side_effect=mocked_req_update_error)
-@mock.patch('requests.get', side_effect=mocked_req_update_error)
-def test_error_if_request_error(self, mock_get, mock_post):
-    MappingModel.db_factory = DbFactoryMock
-    RegistryModel.db_factory = DbFactoryMock
+        registry = create_test_registry_model()
+        registry.intermediate_state = 'updating'
+        registry.target_platform_video_id = '1'
+        registry.video_hash_code = create_metadata_hash({'title': 'Test-Title2', 'description': 'Test-Description'})
+        video = create_test_video_model()
 
-    registry = create_test_registry_model()
-    registry.intermediate_state = 'updating'
-    registry.target_platform_video_id = '1'
-    registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
-    video = create_test_video_model()
-
-    with self.assertRaises(Exception):
         update_video_on_youtube(video, registry)
-
-
-@mock.patch('requests.post', side_effect=mocked_req_update_success)
-@mock.patch('requests.get', side_effect=mocked_req_update_success)
-def test_do_nothing_if_video_hash_equal_to_registry_hash(self, mock_get, mock_post):
-    MappingModel.db_factory = DbFactoryMock
-    RegistryModel.db_factory = DbFactoryMock
-
-    registry = create_test_registry_model()
-    registry.intermediate_state = 'updating'
-    registry.target_platform_video_id = '1'
-    registry.video_hash_code = create_metadata_hash({'title': 'Test-Title', 'description': 'Test-Description'})
-    video = create_test_video_model()
-    video.hash_code = registry.video_hash_code
-
-    update_video_on_youtube(video, registry)
-    self.assertNotIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
-                               {'access_token': '1234', 'description': 'Test-Description', 'name': 'Test-Title'}),
-                     mock_post.call_args_list)
-
-
-@mock.patch('requests.post', side_effect=mocked_req_update_success)
-@mock.patch('requests.get', side_effect=mocked_req_update_success)
-def test_do_nothing_if_remote_hash_not_equal_to_registry_hash(self, mock_get, mock_post):
-    MappingModel.db_factory = DbFactoryMock
-    RegistryModel.db_factory = DbFactoryMock
-
-    registry = create_test_registry_model()
-    registry.intermediate_state = 'updating'
-    registry.target_platform_video_id = '1'
-    registry.video_hash_code = create_metadata_hash({'title': 'Test-Title2', 'description': 'Test-Description'})
-    video = create_test_video_model()
-
-    update_video_on_youtube(video, registry)
-    self.assertNotIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
-                               {'access_token': '1234', 'description': 'Test-Description', 'name': 'Test-Title'}),
-                     mock_post.call_args_list)
+        self.assertEqual(youtube_client_exec_count.count, 1)
 
 
 class YoutubeUnpublishTest(unittest.TestCase):
-    @mock.patch('requests.post', side_effect=mocked_req_unpublish)
-    def test_success(self, mock_post):
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_update_inst)
+    def test_success(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
+        youtube_client_exec_count.count = 0
 
         registry = create_test_registry_model()
         registry.intermediate_state = 'unpublishing'
@@ -287,14 +334,14 @@ class YoutubeUnpublishTest(unittest.TestCase):
         video = create_test_video_model()
 
         unpublish_video_on_youtube(video, registry)
-        self.assertIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
-                                {'access_token': '1234', 'expire_now': 'true'}),
-                      mock_post.call_args_list)
+        self.assertEqual(youtube_client_exec_count.count, 3)
 
-    @mock.patch('requests.post', side_effect=mocked_req_unpublish)
-    def test_error_if_wrong_intermediate_state(self, mock_post):
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_update_inst)
+    def test_error_if_wrong_intermediate_state(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
+        youtube_client_exec_count.count = 0
 
         registry = create_test_registry_model()
         registry.intermediate_state = 'downloading'
@@ -303,14 +350,14 @@ class YoutubeUnpublishTest(unittest.TestCase):
         video = create_test_video_model()
 
         self.assertRaises(Exception, unpublish_video_on_youtube, video, registry);
-        self.assertNotIn(mock.call(API_URL + "/" + registry.target_platform_video_id,
-                                   {'access_token': '1234', 'expire_now': 'true'}),
-                         mock_post.call_args_list)
+        self.assertEqual(youtube_client_exec_count.count, 0)
 
-    @mock.patch('requests.post', side_effect=mocked_req_unpublish)
-    def test_error_if_not_target_platform_video_id_set(self, mock_post):
+    @mock.patch('builtins.open')
+    @mock.patch('connector.youtube.youtube_inst', side_effect=mocked_youtube_update_inst)
+    def test_error_if_not_target_platform_video_id_set(self, mock_youtube, mock_open):
         MappingModel.db_factory = DbFactoryMock
         RegistryModel.db_factory = DbFactoryMock
+        youtube_client_exec_count.count = 0
 
         registry = create_test_registry_model()
         registry.intermediate_state = 'unpublishing'
@@ -320,4 +367,3 @@ class YoutubeUnpublishTest(unittest.TestCase):
 
         with self.assertRaises(Exception):
             unpublish_video_on_youtube(video, registry)
-"""
