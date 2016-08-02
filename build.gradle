@@ -1,7 +1,7 @@
 import de.gesellix.gradle.docker.tasks.*
 
 plugins {
-    id "de.gesellix.docker" version "2016-02-08T22-29-47"
+    id "de.gesellix.docker" version "2016-07-24T01-05-06"
 }
 
 version "1.0.0." + (System.getenv("BUILD_NUMBER") ?: "0") + "-BETA"
@@ -60,7 +60,6 @@ task buildImage(type: DockerBuildTask) {
 task tagImage(type: DockerTagTask) {
     dependsOn buildImage
 
-    force = true
     imageId = image_name + ":dev"
     tag = registryHost + "/" + image_name + ":" + version
 }
@@ -69,7 +68,6 @@ task tagImage(type: DockerTagTask) {
 task tagImageLatest(type: DockerTagTask) {
     dependsOn buildImage
 
-    force = true
     imageId = image_name + ":dev"
     tag = registryHost + "/" + image_name + ":latest"
 }
