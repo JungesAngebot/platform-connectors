@@ -130,11 +130,12 @@ def resumable_upload(insert_request):
         try:
             log_info('Uploading file...')
             status, response = insert_request.next_chunk()
-            if 'id' in response:
-                video_id = response['id']
-                log_info('Video id %s was successfully uploaded.' % video_id)
-            else:
-                raise Exception('The upload failed with an unexpected response: %s' % response)
+            if response is not None:
+                if 'id' in response:
+                    video_id = response['id']
+                    log_info('Video id %s was successfully uploaded.' % video_id)
+                else:
+                    raise Exception('The upload failed with an unexpected response: %s' % response)
         except HttpError as e:
             if e.resp.status in RETRIABLE_STATUS_CODES:
                 error = 'A retriable HTTP error %d occurred:\n%s' % (e.resp.status, e.content)
@@ -186,8 +187,8 @@ def upload(youtube, video: VideoModel, content_owner_id, channel_id):
         body=body,
         onBehalfOfContentOwner=content_owner_id,
         onBehalfOfContentOwnerChannel=channel_id,
-        # chunk size: 100
-        media_body=MediaFileUpload(video.filename, chunksize=100*1024*1024, resumable=True)
+        # chunk size: 512 MB
+        media_body=MediaFileUpload(video.filename, chunksize=512*1024*1024, resumable=True)
     )
     return resumable_upload(insert_request)
 
