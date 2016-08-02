@@ -68,7 +68,7 @@ def create_metadata_hash(metadata):
         video_hash_code.update(bytes(metadata['title'].encode('UTF-8')))
     if 'description' in metadata:
         video_hash_code.update(bytes(metadata['description'].encode('UTF-8')))
-    #    if 'tags' in metadata:
+    # if 'tags' in metadata:
     #        video_hash_code.update(bytes(metadata['tags'].encode('UTF-8')))
 
     return video_hash_code.hexdigest()
@@ -188,12 +188,12 @@ def upload(youtube, video: VideoModel, content_owner_id, channel_id):
         onBehalfOfContentOwner=content_owner_id,
         onBehalfOfContentOwnerChannel=channel_id,
         # chunk size: 512 MB
-        media_body=MediaFileUpload(video.filename, chunksize=512*1024*1024, resumable=True)
+        media_body=MediaFileUpload(video.filename, chunksize=512 * 1024 * 1024, resumable=True)
     )
     return resumable_upload(insert_request)
 
 
-def upload_thumbnail_for_video_if_exists(youtube, content_owner, image_filename, yt_video_id):
+def upload_thumbnail_for_video_if_exists(youtube, content_owner, image_filename, yt_video_id, registry: RegistryModel):
     """
     Set a thumbnail for an existing video.
 
@@ -203,14 +203,20 @@ def upload_thumbnail_for_video_if_exists(youtube, content_owner, image_filename,
     :param yt_video_id: youtube id of video
     :return:
     """
-    if image_filename:
-        youtube.thumbnails().set(
-            videoId=yt_video_id,
-            media_body=image_filename,
-            onBehalfOfContentOwner=content_owner
-        ).execute()
-    else:
-        log_info("No thumbnail for youtube video id %s" % yt_video_id)
+    try:
+        if image_filename:
+            youtube.thumbnails().set(
+                videoId=yt_video_id,
+                media_body=image_filename,
+                onBehalfOfContentOwner=content_owner
+            ).execute()
+        else:
+            log_info("No thumbnail for youtube video id %s" % yt_video_id)
+
+    except Exception as e:
+        registry.message = 'Error uploading thumb of registry entry %s to youtube. Error: %s' % (registry.registry_id, e)
+        log_error(registry.message)
+        log_error(e.__traceback__)
 
 
 def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
@@ -231,15 +237,16 @@ def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
         video_id = upload(youtube, video, content_owner, mapping.target_id)
 
         if video_id and video_id != '':
-            upload_thumbnail_for_video_if_exists(youtube, content_owner, video.image_filename, video_id)
-
             registry.target_platform_video_id = video_id
+            upload_thumbnail_for_video_if_exists(youtube, content_owner, video.image_filename, video_id, registry)
             registry.set_state_and_persist('active')
         else:
             raise Exception('Upload failed, no youtube_id responded for registry %s' % registry.registry_id)
-        return video_id
+
     except Exception as e:
         raise Exception('Error uploading video of registry entry %s to youtube.' % registry.registry_id) from e
+
+    return registry.target_platform_video_id
 
 
 def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
