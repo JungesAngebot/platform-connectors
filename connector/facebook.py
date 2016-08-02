@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import json
 
 import requests
 from commonspy.logging import log_info
@@ -42,11 +43,13 @@ def upload_video_to_facebook(video: VideoModel, registry: RegistryModel):
         else:
             result = requests.post(video_url, data=body)
 
+        log_info('Facebook result: %s' % result.content)
+
         if result.status_code == 200:
             registry.target_platform_video_id = result.json()['id']
             registry.set_state_and_persist('active')
         else:
-            raise Exception('Invalid response.', result.json())
+            raise Exception('Invalid response: %s' % result.content)
 
     except Exception as e:
         raise Exception('Error uploading video of registry entry %s to facebook.' % registry.registry_id) from e
@@ -92,7 +95,7 @@ def update_video_on_facebook(video: VideoModel, registry: RegistryModel):
         result = requests.post(update_url, body)
 
         if result.status_code != 200:
-            raise Exception('Invalid response.', result.json())
+            raise Exception('Invalid response: %s' % result.content)
 
     except Exception as e:
         raise Exception('Error updating video of registry entry %s on facebook.' % registry.registry_id) from e
@@ -123,7 +126,7 @@ def unpublish_video_on_facebook(video: VideoModel, registry: RegistryModel):
         result = requests.post(update_url, body)
 
         if result.status_code != 200:
-            raise Exception('Invalid response.', result.json())
+            raise Exception('Invalid response: %s' % result.content)
 
     except Exception as e:
         raise Exception('Error unpublishing video of registry entry %s on facebook.' % registry.registry_id) from e
