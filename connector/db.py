@@ -68,6 +68,11 @@ class RegistryModel(object):
         self.status = state
         self._persist()
 
+    def set_state_and_message_and_persist(self, state, message):
+        self.status = state
+        self.message = message
+        self._persist()
+
     def set_intermediate_state_and_persist(self, state):
         self.intermediate_state = state
         self._persist()
@@ -125,6 +130,7 @@ class VideoModel(object):
     db_factory = MongoDbFactory
 
     def __init__(self):
+        self.video_id = None
         self.title = None
         self.description = None
         self.keywords = None
@@ -142,6 +148,7 @@ class VideoModel(object):
             video_dict = collection.find_one({'sourceId': video_id})
             log_debug('Found matching database entry.')
             video = cls()
+            video.video_id = video_id
             video.title = video_dict['name'] if 'name' in video_dict else ''
             video.description = video_dict['text'] if 'text' in video_dict else ''
             video.keywords = video_dict['tags'].split(',') if 'tags' in video_dict and video_dict['tags'] else []
@@ -177,9 +184,9 @@ def persist_video_image_on_disk(video_model: VideoModel):
             file.write(result.read())
     except Exception as e:
         traceback.print_exc()
-        video_id = video_model.image_id
+        video_id = video_model.video_id
         log_error(e.__traceback__)
-        raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working' % (
+        raise Exception('Cannot read image with id %s from video with id %s. GridFS connection not working.' % (
             image_id, video_id)) from e
 
 
