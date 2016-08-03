@@ -8,3 +8,4 @@ config/
 build/
 /.gradle/
 *.png
+/log/
