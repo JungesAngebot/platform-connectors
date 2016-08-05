@@ -2,19 +2,10 @@ import os
 import traceback
 import urllib.request
 
-from commonspy.logging import log_error, log_info, log_debug
+from commonspy.logging import log_error, log_info, log_debug, build_message_from_exception_chain
 
 from connector.db import VideoModel, persist_video_image_on_disk
 from connector.platforms import PlatformInteraction
-
-
-def build_message_from_exception_chain(e: Exception):
-    exception = e
-    message = str(exception)
-    while (exception.__cause__):
-        exception = exception.__cause__
-        message = message + " | " + str(exception)
-    return message
 
 
 class Error(object):
