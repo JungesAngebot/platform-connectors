@@ -2,7 +2,7 @@ import os
 import traceback
 import urllib.request
 
-from commonspy.logging import log_error, log_info, log_debug
+from commonspy.logging import log_error, log_info, log_debug, build_message_from_exception_chain
 
 from connector.db import VideoModel, persist_video_image_on_disk
 from connector.platforms import PlatformInteraction
@@ -65,10 +65,12 @@ class Downloading(object):
         except Exception as e:
             traceback.print_exc()
             log_error(e.__traceback__)
-            log_error('Cannot finish download of binary from kaltura. %s' % str(e))
-            self.fire_error()
+            message = 'Cannot finish download of binary from kaltura. %s' % build_message_from_exception_chain(e)
+            log_error(message)
+            self.registry_model.message = message
+            self._fire_error()
 
-    def fire_error(self):
+    def _fire_error(self):
         self.error_state.run()
 
     @classmethod
@@ -88,17 +90,21 @@ class Uploading(object):
 
     def run(self, video):
         try:
-            log_debug('Entering uploading state for video with id %s to platform %s.' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Entering uploading state for video with id %s to platform %s.' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_intermediate_state_and_persist('uploading')
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'upload', video,
                                                           self.registry_model)
-            log_debug('Finished upload of video with registry id %s to platform %s.' % (self.registry_model.registry_id, self.registry_model.target_platform))
-            self.next_state.run()
+            log_debug('Finished upload of video with registry id %s to platform %s.' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
+            self.next_state.run(video)
         except Exception as e:
-            log_error('Cannot perform target platform upload of video with id %s and registry id %s.' % (
-                self.registry_model.registry_id, self.registry_model.video_id))
+            message = 'Cannot perform target platform upload of video with id %s and registry id %s. %s' % (
+                self.registry_model.registry_id, self.registry_model.video_id, build_message_from_exception_chain(e))
+            log_error(message)
             log_error(e.__traceback__)
             traceback.print_exc()
+            self.registry_model.message = message
             self._fire_error()
 
     @classmethod
@@ -111,26 +117,33 @@ class Active(object):
         self.registry_model = registry_model
         self.error_state = Error.create_error_state(registry_model)
 
-    def _cleanup(self):
+    def _cleanup(self, video):
         self.registry_model.set_intermediate_state_and_persist('')
-        if os.path.isfile('%s.mpeg' % self.registry_model.video_id):
-            os.remove('%s.mpeg' % self.registry_model.video_id)
-        if os.path.isfile('%s.png' % self.registry_model.video_id):
-            os.remove('%s.png' % self.registry_model.video_id)
+        if os.path.isfile(video.filename):
+            os.remove(video.filename)
+            log_debug("Cleaning up video file: %s" % video.filename)
+        if os.path.isfile(video.image_filename):
+            os.remove(video.image_filename)
+            log_debug("Cleaning up thumbnail file: %s" % video.image_filename)
 
     def _fire_error(self):
         self.error_state.run()
 
-    def run(self):
+    def run(self, video):
         try:
-            log_debug('Entering active state for video with registry id %s for platform %s.' % (self.registry_model.registry_id, self.registry_model.target_platform))
-            self.registry_model.set_state_and_persist('active')
-            self._cleanup()
-            log_debug('Finished processing for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Entering active state for video with registry id %s for platform %s.' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
+            self.registry_model.set_state_and_message_and_persist('active',
+                                                                  'Content successfully published on target platform.')
+            self._cleanup(video)
+            log_debug('Finished processing for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
         except Exception as e:
             traceback.print_exc()
             log_error(e.__traceback__)
-            log_error('Cannot set state to active.')
+            message = 'Cannot set state to active. %s ' % build_message_from_exception_chain(e)
+            log_error(message)
+            self.registry_model.message = message
             self._fire_error()
 
     @classmethod
@@ -151,19 +164,24 @@ class Updating(object):
 
     def run(self):
         try:
-            log_debug('Entering update state for video with registy id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Entering update state for video with registy id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_intermediate_state_and_persist('updating')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model,
                                                           self.registry_model)
-            log_debug('Finished update state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
-            self.next_state.run()
+            log_debug('Finished update state for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
+            self.next_state.run(video_model)
         except Exception as e:
             traceback.print_exc()
             log_error(e.__traceback__)
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
-            log_error('Unable to update video with id %s and registry id %s.' % (video_id, registry_id))
+            message = 'Unable to update video with id %s and registry id %s. %s' % (
+            video_id, registry_id, build_message_from_exception_chain(e))
+            log_error(message)
+            self.registry_model.message = message
             self._fire_error()
 
     @classmethod
@@ -184,19 +202,24 @@ class Unpublish(object):
 
     def run(self):
         try:
-            log_debug('Entering unpublish state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Entering unpublish state for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_intermediate_state_and_persist('unpublishing')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'unpublish', video_model,
                                                           self.registry_model)
-            log_debug('Finished unpublish state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Finished unpublish state for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
         except Exception as e:
             traceback.print_exc()
             log_error(e.__traceback__)
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
-            log_error('Cannot unpublish video with id %s and registry id %s.' % (video_id, registry_id))
+            message = 'Cannot unpublish video with id %s and registry id %s. %s' % (
+            video_id, registry_id, build_message_from_exception_chain(e))
+            log_error(message)
+            self.registry_model.message = message
             self._fire_error()
 
     @classmethod
@@ -214,15 +237,21 @@ class Inactive(object):
 
     def run(self):
         try:
-            log_debug('Entering inactive state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
-            self.registry_model.set_state_and_persist('inactive')
+            log_debug('Entering inactive state for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
+            self.registry_model.set_state_and_message_and_persist('inactive',
+                                                                  'Content successfully set to private on target platform.')
             self._cleanup()
-            log_debug('Finished inactive state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Finished inactive state for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
         except Exception as e:
             log_error(e.__traceback__)
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
-            log_error('Cannot set state of video with id %s and registry id %s to inactive.' % (video_id, registry_id))
+            message = 'Cannot set state of video with id %s and registry id %s to inactive. %s' % (
+                video_id, registry_id, build_message_from_exception_chain(e))
+            log_error(message)
+            self.registry_model.message = message
             self._fire_error()
 
     def _cleanup(self):
@@ -246,19 +275,24 @@ class Deleting(object):
 
     def run(self):
         try:
-            log_debug('Entering deleting state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Entering deleting state for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_intermediate_state_and_persist('deleting')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'delete', video_model,
                                                           self.registry_model)
-            log_debug('Finished deleting state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Finished deleting state for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run()
         except Exception as e:
             log_error(e.__traceback__)
             traceback.print_exc()
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
-            log_error('Cannot delete video with id %s and registry id %s.' % (video_id, registry_id))
+            message = 'Cannot delete video with id %s and registry id %s. %s' % (
+            video_id, registry_id, build_message_from_exception_chain(e))
+            log_error(message)
+            self.registry_model.message = message
             self._fire_error()
 
     @classmethod
@@ -279,16 +313,22 @@ class Deleted(object):
 
     def run(self):
         try:
-            log_debug('Entering deleted state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
-            self.registry_model.set_state_and_persist('deleted')
+            log_debug('Entering deleted state for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
+            self.registry_model.set_state_and_message_and_persist('deleted',
+                                                                  'Content successfully set to private on target platform.')
             self._cleanup()
-            log_debug('Finished deleted state for video with registry id %s and platform %s' % (self.registry_model.registry_id, self.registry_model.target_platform))
+            log_debug('Finished deleted state for video with registry id %s and platform %s' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
         except Exception as e:
             log_error(e.__traceback__)
             traceback.print_exc()
             registry_id = self.registry_model.registry_id
             video_id = self.registry_model.video_id
-            log_error('Cannot set video with id %s and registry id %s to deleted.' % (video_id, registry_id))
+            message = 'Cannot set video with id %s and registry id %s to deleted. %s' % (
+            video_id, registry_id, build_message_from_exception_chain(e))
+            log_error(message)
+            self.registry_model.message = message
             self._fire_error()
 
     @classmethod
