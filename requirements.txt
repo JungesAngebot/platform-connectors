@@ -7,4 +7,5 @@ requests
 pymongo
 google-api-python-client
 python-json-logger
+pytz
 git+https://github.com/JungesAngebot/commonspy.git

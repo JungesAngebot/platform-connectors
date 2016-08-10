@@ -2,6 +2,8 @@ import hashlib
 import os
 import traceback
 import uuid
+import datetime
+import pytz
 
 from bson import ObjectId
 from commonspy.logging import log_error, log_debug
@@ -59,6 +61,7 @@ class RegistryModel(object):
         self.target_platform_video_id = None
         self.mapping_id = None
         self.video_hash_code = None
+        self.last_update = None
 
     def update_video_hash_code(self, hash_code):
         self.video_hash_code = hash_code
@@ -80,6 +83,7 @@ class RegistryModel(object):
     def _persist(self):
         collection = RegistryModel.db_factory.connector_registry_collection()
         try:
+            self.last_update = datetime.datetime.now(pytz.utc)
             collection.save(self._to_dict())
         except Exception as e:
             traceback.print_exc()
@@ -96,7 +100,8 @@ class RegistryModel(object):
             targetPlatform=self.target_platform,
             targetPlatformVideoId=self.target_platform_video_id,
             mappingId=self.mapping_id,
-            video_hash_code=self.video_hash_code
+            video_hash_code=self.video_hash_code,
+            lastUpdate=self.last_update
         )
 
     @classmethod
@@ -118,6 +123,7 @@ class RegistryModel(object):
             obj.mapping_id = registry_obj['mappingId']
             obj.intermediate_state = registry_obj['intermediateState'] if 'intermediateState' in registry_obj else ''
             obj.video_hash_code = registry_obj['video_hash_code'] if 'video_hash_code' in registry_obj else ''
+            obj.last_update = registry_obj['lastUpdate'] if 'lastUpdate' in registry_obj else None
             log_debug('Loaded registry entry with id %s successfully.' % registry_id)
             return obj
         except Exception as e:
