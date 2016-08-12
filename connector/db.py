@@ -155,7 +155,7 @@ class VideoModel(object):
             log_debug('Found matching database entry.')
             video = cls()
             video.video_id = video_id
-            video.title = video_dict['name'] if 'name' in video_dict else ''
+            video.title = video_dict['title'] if 'title' in video_dict else ''
             video.description = video_dict['text'] if 'text' in video_dict else ''
             video.keywords = video_dict['tags'].split(',') if 'tags' in video_dict and video_dict['tags'] else []
             video.keywords = [keyword.strip() for keyword in video.keywords]
