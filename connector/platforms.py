@@ -1,10 +1,9 @@
 from connector.facebook import upload_video_to_facebook, update_video_on_facebook, unpublish_video_on_facebook, \
     delete_video_on_facebook
-from connector.youtube import upload_video_to_youtube_mcn, delete_video_on_youtube_mcn, unpublish_video_on_youtube_mcn, \
+from connector.youtube_mcn import upload_video_to_youtube_mcn, delete_video_on_youtube_mcn, unpublish_video_on_youtube_mcn, \
     update_video_on_youtube_mcn
-from connector.youtube import upload_video_to_youtube_direct, delete_video_on_youtube_direct, \
+from connector.youtube_direct import upload_video_to_youtube_direct, delete_video_on_youtube_direct, \
     unpublish_video_on_youtube_direct, update_video_on_youtube_direct
-
 
 
 def dummy(video=None, registry=None):
