@@ -1,7 +1,10 @@
 from connector.facebook import upload_video_to_facebook, update_video_on_facebook, unpublish_video_on_facebook, \
     delete_video_on_facebook
-from connector.youtube import upload_video_to_youtube, delete_video_on_youtube, unpublish_video_on_youtube, \
-    update_video_on_youtube
+from connector.youtube import upload_video_to_youtube_mcn, delete_video_on_youtube_mcn, unpublish_video_on_youtube_mcn, \
+    update_video_on_youtube_mcn
+from connector.youtube import upload_video_to_youtube_direct, delete_video_on_youtube_direct, \
+    unpublish_video_on_youtube_direct, update_video_on_youtube_direct
+
 
 
 def dummy(video=None, registry=None):
@@ -18,10 +21,16 @@ class PlatformInteraction(object):
                 'delete': delete_video_on_facebook
             },
             'youtube': {
-                'upload': upload_video_to_youtube,
-                'update': update_video_on_youtube,
-                'unpublish': unpublish_video_on_youtube,
-                'delete': delete_video_on_youtube
+                'upload': upload_video_to_youtube_mcn,
+                'update': update_video_on_youtube_mcn,
+                'unpublish': unpublish_video_on_youtube_mcn,
+                'delete': delete_video_on_youtube_mcn
+            },
+            'youtube_direct': {
+                'upload': upload_video_to_youtube_direct,
+                'update': update_video_on_youtube_direct,
+                'unpublish': unpublish_video_on_youtube_direct,
+                'delete': delete_video_on_youtube_direct
             }
         }
 

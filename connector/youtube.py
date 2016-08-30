@@ -1,18 +1,18 @@
 import hashlib
-import logging
-import os
-import sys
 import time
+import urllib
 from random import random
 
 import httplib2
+import requests
 from commonspy.logging import log_info, log_error
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
+from oauth2client.client import AccessTokenCredentials
 from oauth2client.service_account import ServiceAccountCredentials
 
-from connector import APP_ROOT
+from connector import APP_ROOT, config
 from connector.db import VideoModel, RegistryModel, MappingModel
 
 """ This module handles youtube video upload, update
@@ -98,6 +98,38 @@ def youtube_inst():
                             YOUTUBE_CONTENT_ID_API_VERSION, http=http)
 
     return youtube, youtube_partner
+
+
+def youtube_direct_inst(target_id):
+    access_token = access_token_from_refresh_token(target_id)
+    credentials = AccessTokenCredentials(access_token, "MyAgent/1.0", None)
+
+    if credentials is None or credentials.invalid:
+        raise Exception('Cannot create access_token from refresh_token.')
+
+    http = httplib2.Http()
+    youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
+                    http=credentials.authorize(http))
+
+    return youtube
+
+
+def access_token_from_refresh_token(refresh_token):
+    data = urllib.parse.urlencode({
+        'grant_type': 'refresh_token',
+        'client_id': config.property('youtube.client_id'),
+        'client_secret': config.property('youtube.client_secret'),
+        'refresh_token': refresh_token
+    })
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+    }
+    response = requests.post(config.property('youtube.token_uri'), data=data, headers=headers).json()
+    if 'error' in response:
+        raise Exception('Error getting access_token: %s' % response['error'])
+
+    return response['access_token']
 
 
 def get_content_owner_id(youtube_partner):
@@ -214,19 +246,27 @@ def upload_thumbnail_for_video_if_exists(youtube, content_owner, image_filename,
             log_info("No thumbnail for youtube video id %s" % yt_video_id)
 
     except Exception as e:
-        registry.message = 'Error uploading thumb of registry entry %s to youtube. Error: %s' % (registry.registry_id, e)
+        registry.message = 'Error uploading thumb of registry entry %s to youtube. Error: %s' % (
+        registry.registry_id, e)
         log_error(registry.message)
         log_error(e.__traceback__)
 
 
-def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
-    """ Triggers the video upload initialization method.
-    For each video the gathered metadata will be set
-    and the video will be uploaded. In case of an error
-    the upload mechanism retries the upload. Uploading
-    errors are logged into a mongo db collection.
-    """
+def upload_video_to_youtube_direct(video: VideoModel, registry: RegistryModel):
+    if registry.target_platform_video_id or registry.intermediate_state != 'uploading':
+        raise Exception('Upload not triggered because registry %s is not in correct state' % registry.registry_id)
 
+    try:
+        mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
+        youtube = youtube_direct_inst(mapping.target_id)
+        content_owner = None
+        channel_id = None
+        upload_video_to_youtube(youtube, video, registry, content_owner, channel_id)
+    except Exception as e:
+        raise Exception('Error initializing MCN youtube upload request for entry %s.' % registry.registry_id) from e
+
+
+def upload_video_to_youtube_mcn(video: VideoModel, registry: RegistryModel):
     if registry.target_platform_video_id or registry.intermediate_state != 'uploading':
         raise Exception('Upload not triggered because registry %s is not in correct state' % registry.registry_id)
 
@@ -234,7 +274,22 @@ def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
         mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
         youtube, youtube_partner = youtube_inst()
         content_owner = get_content_owner_id(youtube_partner)
-        video_id = upload(youtube, video, content_owner, mapping.target_id)
+        channel_id = mapping.target_id
+        upload_video_to_youtube(youtube, video, registry, content_owner, channel_id)
+    except Exception as e:
+        raise Exception('Error initializing direct youtube upload request for entry %s.' % registry.registry_id) from e
+
+
+def upload_video_to_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner, channel_id):
+    """ Triggers the video upload initialization method.
+    For each video the gathered metadata will be set
+    and the video will be uploaded. In case of an error
+    the upload mechanism retries the upload. Uploading
+    errors are logged into a mongo db collection.
+    """
+
+    try:
+        video_id = upload(youtube, video, content_owner, channel_id)
 
         if video_id and video_id != '':
             registry.target_platform_video_id = video_id
@@ -249,10 +304,31 @@ def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
     return registry.target_platform_video_id
 
 
-def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
-    """ Update metadata of video on youtube. """
+def update_video_on_youtube_direct(video: VideoModel, registry: RegistryModel):
     if registry.target_platform_video_id is None or registry.intermediate_state != 'updating':
         raise Exception('Upload not triggered because registry %s is not in correct state' % registry.registry_id)
+    try:
+        mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
+        youtube = youtube_direct_inst(mapping.target_id)
+        content_owner = None
+        update_video_on_youtube(youtube, video, registry, content_owner)
+    except Exception as e:
+        raise Exception('Error initializing direct youtube update request for entry %s.' % registry.registry_id) from e
+
+
+def update_video_on_youtube_mcn(video: VideoModel, registry: RegistryModel):
+    if registry.target_platform_video_id is None or registry.intermediate_state != 'updating':
+        raise Exception('Upload not triggered because registry %s is not in correct state' % registry.registry_id)
+    try:
+        youtube, youtube_partner = youtube_inst()
+        content_owner = get_content_owner_id(youtube_partner)
+        update_video_on_youtube(youtube, video, registry, content_owner)
+    except Exception as e:
+        raise Exception('Error initializing MCN youtube update request for entry %s.' % registry.registry_id) from e
+
+
+def update_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner):
+    """ Update metadata of video on youtube. """
 
     if video.hash_code == registry.video_hash_code:
         log_info('Metadata of registry entry %s not changed, so no update needed.' % registry.registry_id)
@@ -264,8 +340,6 @@ def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
         raise UpdateError('Youtube_id not found for ' + registry.registry_id)
 
     try:
-        youtube, youtube_partner = youtube_inst()
-
         video_list_response = youtube.videos().list(
             id=youtube_id,
             part='snippet'
@@ -287,7 +361,7 @@ def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
 
         youtube.videos().update(
             part='snippet',
-            onBehalfOfContentOwner=get_content_owner_id(youtube_partner),
+            onBehalfOfContentOwner=content_owner,
             body=dict(
                 snippet=video_metadata,
                 id=youtube_id
@@ -297,21 +371,40 @@ def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
         raise Exception('Error updating video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
-def unpublish_video_on_youtube(video: VideoModel, registry: RegistryModel):
+def unpublish_video_on_youtube_direct(video: VideoModel, registry: RegistryModel):
+    if registry.target_platform_video_id is None or registry.intermediate_state not in ('unpublishing', 'deleting'):
+        raise Exception('Unpublishing not triggered because registry %s is not in correct state' % registry.registry_id)
+    try:
+        mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
+        youtube = youtube_direct_inst(mapping.target_id)
+        content_owner = None
+        unpublish_video_on_youtube(youtube, video, registry, content_owner)
+    except Exception as e:
+        raise Exception(
+            'Error initializing direct youtube unpublish request for entry %s.' % registry.registry_id) from e
+
+
+def unpublish_video_on_youtube_mcn(youtube, video: VideoModel, registry: RegistryModel, content_owner):
+    if registry.target_platform_video_id is None or registry.intermediate_state not in ('unpublishing', 'deleting'):
+        raise Exception('Unpublishing not triggered because registry %s is not in correct state' % registry.registry_id)
+    try:
+        youtube, youtube_partner = youtube_inst()
+        content_owner = get_content_owner_id(youtube_partner)
+        unpublish_video_on_youtube(youtube, video, registry, content_owner)
+    except Exception as e:
+        raise Exception('Error initializing MCN youtube unpublish request for entry %s.' % registry.registry_id) from e
+
+
+def unpublish_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner):
     """ Set the privacyStatus to 'private' of the given video if it
     was uploaded to youtube.
 
     """
-    if registry.target_platform_video_id is None or registry.intermediate_state not in ('unpublishing', 'deleting'):
-        raise Exception('Unpublishing not triggered because registry %s is not in correct state' % registry.registry_id)
-
     youtube_id = registry.target_platform_video_id
 
     if youtube_id is None:
         raise UnpublishError('Youtube_id not found for ' + registry.registry_id)
     try:
-        youtube, youtube_partner = youtube_inst()
-
         video_list_response = youtube.videos().list(
             id=youtube_id,
             part='status'
@@ -323,7 +416,7 @@ def unpublish_video_on_youtube(video: VideoModel, registry: RegistryModel):
         video_list_snippet['privacyStatus'] = 'private'
         youtube.videos().update(
             part='status',
-            onBehalfOfContentOwner=get_content_owner_id(youtube_partner),
+            onBehalfOfContentOwner=content_owner,
             body=dict(
                 status=video_list_snippet,
                 id=youtube_id
@@ -333,5 +426,9 @@ def unpublish_video_on_youtube(video: VideoModel, registry: RegistryModel):
         raise Exception('Error unpublishing video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
-def delete_video_on_youtube(video: VideoModel, registry: RegistryModel):
-    unpublish_video_on_youtube(video, registry)
+def delete_video_on_youtube_direct(video: VideoModel, registry: RegistryModel):
+    unpublish_video_on_youtube_direct(video, registry)
+
+
+def delete_video_on_youtube_mcn(video: VideoModel, registry: RegistryModel):
+    unpublish_video_on_youtube_mcn(video, registry)
