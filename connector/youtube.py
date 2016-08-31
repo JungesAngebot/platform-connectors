@@ -68,7 +68,6 @@ def create_metadata_hash(metadata):
     return video_hash_code.hexdigest()
 
 
-
 def resumable_upload(insert_request):
     """ Actually uploads the video to youtube.
     If an error occours the function will retry the
@@ -167,7 +166,7 @@ def upload_thumbnail_for_video_if_exists(youtube, content_owner, image_filename,
 
     except Exception as e:
         registry.message = 'Error uploading thumb of registry entry %s to youtube. Error: %s' % (
-        registry.registry_id, e)
+            registry.registry_id, e)
         log_error(registry.message)
         log_error(e.__traceback__)
 
@@ -271,5 +270,70 @@ def unpublish_video_on_youtube(youtube, video: VideoModel, registry: RegistryMod
         raise Exception('Error unpublishing video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
+def claim_video_on_youtube(youtube_partner, content_owner_id, target_platform_video_id, video: VideoModel):
+    try:
+        asset_id = create_asset(youtube_partner, content_owner_id, video.title, video.description)
+        set_asset_ownership(youtube_partner, content_owner_id, asset_id)
+        claim_video(youtube_partner, content_owner_id, asset_id, target_platform_video_id)
+    except Exception as e:
+        log_error('Error setting policies on video with id "%s" and id on target platform "%s". Error %s' % (video.video_id, target_platform_video_id, e))
+        log_error(e.__traceback__)
 
 
+def create_asset(youtube_partner, content_owner_id, title, description):
+    """ This creates a new asset corresponding to a video on the web.
+    The asset is linked to the corresponding YouTube video via a
+    claim that will be created later.
+    """
+    body = dict(
+        type="web",
+        metadata=dict(
+            title=title,
+            description=description
+        )
+    )
+
+    assets_insert_response = youtube_partner.assets().insert(
+        onBehalfOfContentOwner=content_owner_id,
+        body=body
+    ).execute()
+
+    return assets_insert_response["id"]
+
+
+def set_asset_ownership(youtube_partner, content_owner_id, asset_id):
+    # This specifies that content_owner_id owns 100% of the asset worldwide.
+    body = dict(
+        general=[dict(
+            owner=content_owner_id,
+            ratio=100,
+            type="exclude",
+            territories=[]
+        )]
+    )
+
+    youtube_partner.ownership().update(
+        onBehalfOfContentOwner=content_owner_id,
+        assetId=asset_id,
+        body=body
+    ).execute()
+
+
+def claim_video(youtube_partner, content_owner_id, asset_id, video_id):
+    policy = dict(
+        id='S167739528016254'
+    )
+
+    body = dict(
+        assetId=asset_id,
+        videoId=video_id,
+        policy=policy,
+        contentType="audiovisual"
+    )
+
+    claims_insert_response = youtube_partner.claims().insert(
+        onBehalfOfContentOwner=content_owner_id,
+        body=body
+    ).execute()
+
+    return claims_insert_response["id"]
