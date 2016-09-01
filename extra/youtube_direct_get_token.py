@@ -32,8 +32,3 @@ credentials = flow.step2_exchange(auth_code)
 
 
 print(credentials.refresh_token)
-
-# ,
-# 'https://www.googleapis.com/auth/youtube',
-# 'https://www.googleapis.com/auth/youtube.force-ssl',
-# 'https://www.googleapis.com/auth/youtubepartner'

@@ -11,9 +11,6 @@ from connector.youtube_direct import upload_video_to_youtube_direct, delete_vide
     unpublish_video_on_youtube_direct, update_video_on_youtube_direct
 
 
-def dummy(video=None, registry=None):
-    return video, registry
-
 def test_mode_action(action, video, registry):
     log_info("DRY MODE action: '%s' | video: %s | registry: %s" % (action, video.__dict__, registry.__dict__))
 
