@@ -3,6 +3,7 @@ import os
 from flask import Blueprint
 from pymongo import MongoClient
 
+from commonspy.configuration import OverwritableConfiguration
 from config import ASSET_MONGO_DB
 from config import CONNECTOR_MONGO_DB
 
@@ -10,6 +11,8 @@ APP_ROOT = os.path.dirname(os.path.abspath(__file__)).replace(os.sep + 'connecto
 
 
 api = Blueprint('api', __name__)
+
+config = OverwritableConfiguration.create_from_file('%s/config/config.json' % APP_ROOT)
 
 
 def mongo_connection_url(system):

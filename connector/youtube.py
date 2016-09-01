@@ -1,19 +1,13 @@
 import hashlib
-import logging
-import os
-import sys
 import time
 from random import random
 
 import httplib2
 from commonspy.logging import log_info, log_error
-from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
-from oauth2client.service_account import ServiceAccountCredentials
 
-from connector import APP_ROOT
-from connector.db import VideoModel, RegistryModel, MappingModel
+from connector.db import VideoModel, RegistryModel
 
 """ This module handles youtube video upload, update
 and unpublish. Videos are only uploaded to multi
@@ -73,48 +67,6 @@ def create_metadata_hash(metadata):
 
     return video_hash_code.hexdigest()
 
-
-def youtube_inst():
-    """ Authenticates at the youtube api.
-    The connector will always upload to multi channel
-    networks on youtube. Therefor four youtube
-    api scopes are required:
-    - Standard Youtube Scope (full read / write access)
-    - Youtube partner scope
-    - Youtube Upload Scope
-    - Youtube force-ssl Scope
-    """
-
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        APP_ROOT + '/config/client_secrets.json', scopes=youtube_scopes)
-
-    http = httplib2.Http()
-    http = credentials.authorize(http)
-
-    youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
-                    http=http)
-
-    youtube_partner = build(YOUTUBE_CONTENT_ID_API_SERVICE_NAME,
-                            YOUTUBE_CONTENT_ID_API_VERSION, http=http)
-
-    return youtube, youtube_partner
-
-
-def get_content_owner_id(youtube_partner):
-    """ Function to gather the youtube content owner
-    id. This id is required to upload a video to
-    a multi channel network on youtube.
-    """
-
-    try:
-        content_owners_list_response = youtube_partner.contentOwners().list(
-            fetchMine=True
-        ).execute()
-    except HttpError as e:
-        raise Exception(
-            'The request is not authorized by a Google Account that is linked to a YouTube content owner.') from e
-
-    return content_owners_list_response['items'][0]['id']
 
 
 def resumable_upload(insert_request):
@@ -214,12 +166,13 @@ def upload_thumbnail_for_video_if_exists(youtube, content_owner, image_filename,
             log_info("No thumbnail for youtube video id %s" % yt_video_id)
 
     except Exception as e:
-        registry.message = 'Error uploading thumb of registry entry %s to youtube. Error: %s' % (registry.registry_id, e)
+        registry.message = 'Error uploading thumb of registry entry %s to youtube. Error: %s' % (
+        registry.registry_id, e)
         log_error(registry.message)
         log_error(e.__traceback__)
 
 
-def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
+def upload_video_to_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner, channel_id):
     """ Triggers the video upload initialization method.
     For each video the gathered metadata will be set
     and the video will be uploaded. In case of an error
@@ -227,14 +180,8 @@ def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
     errors are logged into a mongo db collection.
     """
 
-    if registry.target_platform_video_id or registry.intermediate_state != 'uploading':
-        raise Exception('Upload not triggered because registry %s is not in correct state' % registry.registry_id)
-
     try:
-        mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
-        youtube, youtube_partner = youtube_inst()
-        content_owner = get_content_owner_id(youtube_partner)
-        video_id = upload(youtube, video, content_owner, mapping.target_id)
+        video_id = upload(youtube, video, content_owner, channel_id)
 
         if video_id and video_id != '':
             registry.target_platform_video_id = video_id
@@ -249,10 +196,8 @@ def upload_video_to_youtube(video: VideoModel, registry: RegistryModel):
     return registry.target_platform_video_id
 
 
-def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
+def update_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner):
     """ Update metadata of video on youtube. """
-    if registry.target_platform_video_id is None or registry.intermediate_state != 'updating':
-        raise Exception('Upload not triggered because registry %s is not in correct state' % registry.registry_id)
 
     if video.hash_code == registry.video_hash_code:
         log_info('Metadata of registry entry %s not changed, so no update needed.' % registry.registry_id)
@@ -264,8 +209,6 @@ def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
         raise UpdateError('Youtube_id not found for ' + registry.registry_id)
 
     try:
-        youtube, youtube_partner = youtube_inst()
-
         video_list_response = youtube.videos().list(
             id=youtube_id,
             part='snippet'
@@ -287,7 +230,7 @@ def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
 
         youtube.videos().update(
             part='snippet',
-            onBehalfOfContentOwner=get_content_owner_id(youtube_partner),
+            onBehalfOfContentOwner=content_owner,
             body=dict(
                 snippet=video_metadata,
                 id=youtube_id
@@ -297,21 +240,16 @@ def update_video_on_youtube(video: VideoModel, registry: RegistryModel):
         raise Exception('Error updating video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
-def unpublish_video_on_youtube(video: VideoModel, registry: RegistryModel):
+def unpublish_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner):
     """ Set the privacyStatus to 'private' of the given video if it
     was uploaded to youtube.
 
     """
-    if registry.target_platform_video_id is None or registry.intermediate_state not in ('unpublishing', 'deleting'):
-        raise Exception('Unpublishing not triggered because registry %s is not in correct state' % registry.registry_id)
-
     youtube_id = registry.target_platform_video_id
 
     if youtube_id is None:
         raise UnpublishError('Youtube_id not found for ' + registry.registry_id)
     try:
-        youtube, youtube_partner = youtube_inst()
-
         video_list_response = youtube.videos().list(
             id=youtube_id,
             part='status'
@@ -323,7 +261,7 @@ def unpublish_video_on_youtube(video: VideoModel, registry: RegistryModel):
         video_list_snippet['privacyStatus'] = 'private'
         youtube.videos().update(
             part='status',
-            onBehalfOfContentOwner=get_content_owner_id(youtube_partner),
+            onBehalfOfContentOwner=content_owner,
             body=dict(
                 status=video_list_snippet,
                 id=youtube_id
@@ -333,5 +271,5 @@ def unpublish_video_on_youtube(video: VideoModel, registry: RegistryModel):
         raise Exception('Error unpublishing video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
-def delete_video_on_youtube(video: VideoModel, registry: RegistryModel):
-    unpublish_video_on_youtube(video, registry)
+
+
