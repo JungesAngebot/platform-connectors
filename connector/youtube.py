@@ -1,9 +1,10 @@
 import hashlib
 import time
+import traceback
 from random import random
 
 import httplib2
-from commonspy.logging import log_info, log_error
+from commonspy.logging import log_info, log_error, log_debug
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
@@ -242,7 +243,6 @@ def update_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel,
 def unpublish_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner):
     """ Set the privacyStatus to 'private' of the given video if it
     was uploaded to youtube.
-
     """
     youtube_id = registry.target_platform_video_id
 
@@ -271,13 +271,22 @@ def unpublish_video_on_youtube(youtube, video: VideoModel, registry: RegistryMod
 
 
 def claim_video_on_youtube(youtube_partner, content_owner_id, target_platform_video_id, video: VideoModel):
+    """ Performs all steps to claim a video on the youtube platform and upload a referenc.
+
+    After these steps have been performed successfully a UploadPolicy and a MatchPolicy are set for the
+    video content. Thus, all videos with the same content are automatically claimed and our policies 'track' are
+    applied to it.
+    """
     try:
+        log_info("Video for upload: %s" % video.__dict__)
         asset_id = create_asset(youtube_partner, content_owner_id, video.title, video.description)
         set_asset_ownership(youtube_partner, content_owner_id, asset_id)
-        claim_video(youtube_partner, content_owner_id, asset_id, target_platform_video_id)
+        set_match_policy(youtube_partner, asset_id)
+        claim_id = claim_video(youtube_partner, content_owner_id, asset_id, target_platform_video_id)
+        create_reference(youtube_partner, asset_id, video.filename)
     except Exception as e:
         log_error('Error setting policies on video with id "%s" and id on target platform "%s". Error %s' % (video.video_id, target_platform_video_id, e))
-        log_error(e.__traceback__)
+        log_error(traceback.format_tb(e.__traceback__))
 
 
 def create_asset(youtube_partner, content_owner_id, title, description):
@@ -297,7 +306,7 @@ def create_asset(youtube_partner, content_owner_id, title, description):
         onBehalfOfContentOwner=content_owner_id,
         body=body
     ).execute()
-
+    log_info("asset created: %s" % assets_insert_response)
     return assets_insert_response["id"]
 
 
@@ -320,6 +329,9 @@ def set_asset_ownership(youtube_partner, content_owner_id, asset_id):
 
 
 def claim_video(youtube_partner, content_owner_id, asset_id, video_id):
+    """ Creates a claim for the video.
+    This makes sure the UploadPolicy is set correctly.
+    """
     policy = dict(
         id='S167739528016254'
     )
@@ -337,3 +349,46 @@ def claim_video(youtube_partner, content_owner_id, asset_id, video_id):
     ).execute()
 
     return claims_insert_response["id"]
+
+
+def set_match_policy(youtube_partner, asset_id):
+    match_policy_response = youtube_partner.assetMatchPolicy().update(
+        assetId=asset_id,
+        body={
+            'policyId': 'S167739528016254'
+        }
+    ).execute()
+    log_info('added match policy: %s' % match_policy_response)
+    return match_policy_response
+
+
+def create_reference_from_claim(youtube_partner, claim_id, content_owner):
+    """ Creates a reference from the specified claim_id
+
+    needs the video to be completely processed on youtube. Currently this is not an option in our workflow.
+    """
+    reference_response = youtube_partner.references().insert(
+        claimId=claim_id,
+        onBehalfOfContentOwner=content_owner,
+        body={
+            'contentType':'audiovisual'
+        }
+    ).execute()
+    log_info('created reference: %s' % reference_response)
+    return reference_response
+
+
+def create_reference(youtube_partner, asset_id, reference_file):
+    """ Create a reference by uploading the video content.
+    Uploads the specified reference_file to youtube so that a reference object is created. The reference file
+    usually is the same file as the video to be uploaded.
+    """
+    reference_service = youtube_partner.references()
+    media = MediaFileUpload(reference_file, resumable=True)
+    request = reference_service.insert(
+        body={'assetId': asset_id, 'contentType': 'audiovisual'},
+        media_body=media)
+    status, response = request.next_chunk()
+    while response is None:
+        status, response = request.next_chunk()
+    log_info('Reference has been created: %s' % response)
