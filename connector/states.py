@@ -6,6 +6,7 @@ from commonspy.logging import log_error, log_info, log_debug, build_message_from
 
 from connector.db import VideoModel, persist_video_image_on_disk
 from connector.platforms import PlatformInteraction
+from connector.youtube import SuccessWithWarningException
 
 
 class Error(object):
@@ -83,7 +84,8 @@ class Uploading(object):
         self.error_state = Error.create_error_state(registry_model)
         self.interaction = PlatformInteraction()
         self.registry_model = registry_model
-        self.next_state = Active.create_active_state(self.registry_model)
+        self.next_state = Active.create_active_state(self.registry_model, True)
+        self.next_state_with_custom_message = Active.create_active_state(self.registry_model, False)
 
     def _fire_error(self):
         self.error_state.run()
@@ -98,6 +100,10 @@ class Uploading(object):
             log_debug('Finished upload of video with registry id %s to platform %s.' % (
                 self.registry_model.registry_id, self.registry_model.target_platform))
             self.next_state.run(video)
+        except SuccessWithWarningException as e:
+            log_debug('Finished upload of video with registry id %s to platform %s.' % (
+                self.registry_model.registry_id, self.registry_model.target_platform))
+            self.next_state_with_custom_message.run(video)
         except Exception as e:
             message = 'Cannot perform target platform upload of video with id %s and registry id %s. %s' % (
                 self.registry_model.registry_id, self.registry_model.video_id, build_message_from_exception_chain(e))
@@ -113,9 +119,10 @@ class Uploading(object):
 
 
 class Active(object):
-    def __init__(self, registry_model):
+    def __init__(self, registry_model, overwrite_success_message):
         self.registry_model = registry_model
         self.error_state = Error.create_error_state(registry_model)
+        self.overwrite_success_message = overwrite_success_message
 
     def _cleanup(self, video):
         self.registry_model.set_intermediate_state_and_persist('')
@@ -133,8 +140,13 @@ class Active(object):
         try:
             log_debug('Entering active state for video with registry id %s for platform %s.' % (
                 self.registry_model.registry_id, self.registry_model.target_platform))
-            self.registry_model.set_state_and_message_and_persist('active',
+
+            if self.overwrite_success_message:
+                self.registry_model.set_state_and_message_and_persist('active',
                                                                   'Content successfully published on target platform.')
+            else:
+                self.registry_model.set_state_and_persist('active')
+
             self._cleanup(video)
             log_debug('Finished processing for video with registry id %s and platform %s' % (
                 self.registry_model.registry_id, self.registry_model.target_platform))
@@ -147,8 +159,8 @@ class Active(object):
             self._fire_error()
 
     @classmethod
-    def create_active_state(cls, registry_model):
-        return cls(registry_model)
+    def create_active_state(cls, registry_model, overwrite_success_message=True):
+        return cls(registry_model, overwrite_success_message)
 
 
 class Updating(object):

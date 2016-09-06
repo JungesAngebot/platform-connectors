@@ -270,7 +270,7 @@ def unpublish_video_on_youtube(youtube, video: VideoModel, registry: RegistryMod
         raise Exception('Error unpublishing video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
-def claim_video_on_youtube(youtube_partner, content_owner_id, target_platform_video_id, video: VideoModel):
+def claim_video_on_youtube(youtube_partner, content_owner_id, target_platform_video_id, video: VideoModel, registry: RegistryModel):
     """ Performs all steps to claim a video on the youtube platform and upload a referenc.
 
     After these steps have been performed successfully a UploadPolicy and a MatchPolicy are set for the
@@ -278,7 +278,7 @@ def claim_video_on_youtube(youtube_partner, content_owner_id, target_platform_vi
     applied to it.
     """
     try:
-        log_info("Video for upload: %s" % video.__dict__)
+        log_info("Setting policies for video: %s" % video.__dict__)
         asset_id = create_asset(youtube_partner, content_owner_id, video.title, video.description)
         set_asset_ownership(youtube_partner, content_owner_id, asset_id)
         set_match_policy(youtube_partner, asset_id)
@@ -287,6 +287,8 @@ def claim_video_on_youtube(youtube_partner, content_owner_id, target_platform_vi
     except Exception as e:
         log_error('Error setting policies on video with id "%s" and id on target platform "%s". Error %s' % (video.video_id, target_platform_video_id, e))
         log_error(traceback.format_tb(e.__traceback__))
+        registry.set_message_and_persist("Warning while setting policies: %s" % e)
+        raise SuccessWithWarningException() from e
 
 
 def create_asset(youtube_partner, content_owner_id, title, description):
@@ -306,7 +308,7 @@ def create_asset(youtube_partner, content_owner_id, title, description):
         onBehalfOfContentOwner=content_owner_id,
         body=body
     ).execute()
-    log_info("asset created: %s" % assets_insert_response)
+    log_info("Asset created: %s" % assets_insert_response)
     return assets_insert_response["id"]
 
 
@@ -330,8 +332,9 @@ def set_asset_ownership(youtube_partner, content_owner_id, asset_id):
 
 def claim_video(youtube_partner, content_owner_id, asset_id, video_id):
     """ Creates a claim for the video.
-    This makes sure the UploadPolicy is set correctly.
+    This makes sure the UsagePolicy is set correctly.
     """
+    log_info("Claiming video %s for asset %s." % (video_id, asset_id))
     policy = dict(
         id='S167739528016254'
     )
@@ -348,6 +351,7 @@ def claim_video(youtube_partner, content_owner_id, asset_id, video_id):
         body=body
     ).execute()
 
+    log_info("Video claimed. %s" % claims_insert_response)
     return claims_insert_response["id"]
 
 
@@ -358,7 +362,7 @@ def set_match_policy(youtube_partner, asset_id):
             'policyId': 'S167739528016254'
         }
     ).execute()
-    log_info('added match policy: %s' % match_policy_response)
+    log_info('Added match policy: %s' % match_policy_response)
     return match_policy_response
 
 
@@ -374,7 +378,7 @@ def create_reference_from_claim(youtube_partner, claim_id, content_owner):
             'contentType':'audiovisual'
         }
     ).execute()
-    log_info('created reference: %s' % reference_response)
+    log_info('Created reference: %s' % reference_response)
     return reference_response
 
 
@@ -383,6 +387,7 @@ def create_reference(youtube_partner, asset_id, reference_file):
     Uploads the specified reference_file to youtube so that a reference object is created. The reference file
     usually is the same file as the video to be uploaded.
     """
+    log_info("Uploading reference for asset %s. File: %s" % (asset_id, reference_file))
     reference_service = youtube_partner.references()
     media = MediaFileUpload(reference_file, resumable=True)
     request = reference_service.insert(
@@ -391,4 +396,13 @@ def create_reference(youtube_partner, asset_id, reference_file):
     status, response = request.next_chunk()
     while response is None:
         status, response = request.next_chunk()
-    log_info('Reference has been created: %s' % response)
+    log_info('Reference for asset %s has been created: %s' % (asset_id, response))
+
+
+
+class SuccessWithWarningException(Exception):
+    """ Raised if in some step a warnings message should remain in the registry database but the overall state
+    sould still be set to 'active'.
+    """
+    def __init__(self, *args, **kwargs):
+        pass

@@ -8,7 +8,7 @@ from connector.db import RegistryModel, MappingModel
 from connector.db import VideoModel
 from connector.youtube import youtube_scopes, YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, \
     YOUTUBE_CONTENT_ID_API_SERVICE_NAME, YOUTUBE_CONTENT_ID_API_VERSION, upload_video_to_youtube, \
-    update_video_on_youtube, unpublish_video_on_youtube, claim_video_on_youtube
+    update_video_on_youtube, unpublish_video_on_youtube, claim_video_on_youtube, SuccessWithWarningException
 
 
 def youtube_inst():
@@ -64,7 +64,9 @@ def upload_video_to_youtube_mcn(video: VideoModel, registry: RegistryModel):
         content_owner = get_content_owner_id(youtube_partner)
         channel_id = mapping.target_id
         video_id = upload_video_to_youtube(youtube, video, registry, content_owner, channel_id)
-        claim_video_on_youtube(youtube_partner, content_owner, video_id, video)
+        claim_video_on_youtube(youtube_partner, content_owner, video_id, video, registry)
+    except SuccessWithWarningException as warning:
+        raise warning
     except Exception as e:
         raise Exception('Error initializing MCN youtube upload request for entry %s.' % registry.registry_id) from e
 

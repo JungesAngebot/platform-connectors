@@ -80,6 +80,10 @@ class RegistryModel(object):
         self.intermediate_state = state
         self._persist()
 
+    def set_message_and_persist(self, message):
+        self.message = message
+        self._persist()
+
     def _persist(self):
         collection = RegistryModel.db_factory.connector_registry_collection()
         try:
