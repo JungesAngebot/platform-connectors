@@ -1,9 +1,10 @@
 import hashlib
 import time
+import traceback
 from random import random
 
 import httplib2
-from commonspy.logging import log_info, log_error
+from commonspy.logging import log_info, log_error, log_debug
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
@@ -66,7 +67,6 @@ def create_metadata_hash(metadata):
     #        video_hash_code.update(bytes(metadata['tags'].encode('UTF-8')))
 
     return video_hash_code.hexdigest()
-
 
 
 def resumable_upload(insert_request):
@@ -167,7 +167,7 @@ def upload_thumbnail_for_video_if_exists(youtube, content_owner, image_filename,
 
     except Exception as e:
         registry.message = 'Error uploading thumb of registry entry %s to youtube. Error: %s' % (
-        registry.registry_id, e)
+            registry.registry_id, e)
         log_error(registry.message)
         log_error(e.__traceback__)
 
@@ -243,7 +243,6 @@ def update_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel,
 def unpublish_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner):
     """ Set the privacyStatus to 'private' of the given video if it
     was uploaded to youtube.
-
     """
     youtube_id = registry.target_platform_video_id
 
@@ -271,5 +270,139 @@ def unpublish_video_on_youtube(youtube, video: VideoModel, registry: RegistryMod
         raise Exception('Error unpublishing video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
+def claim_video_on_youtube(youtube_partner, content_owner_id, target_platform_video_id, video: VideoModel, registry: RegistryModel):
+    """ Performs all steps to claim a video on the youtube platform and upload a referenc.
+
+    After these steps have been performed successfully a UploadPolicy and a MatchPolicy are set for the
+    video content. Thus, all videos with the same content are automatically claimed and our policies 'track' are
+    applied to it.
+    """
+    try:
+        log_info("Setting policies for video: %s" % video.__dict__)
+        asset_id = create_asset(youtube_partner, content_owner_id, video.title, video.description)
+        set_asset_ownership(youtube_partner, content_owner_id, asset_id)
+        set_match_policy(youtube_partner, asset_id)
+        claim_id = claim_video(youtube_partner, content_owner_id, asset_id, target_platform_video_id)
+        create_reference(youtube_partner, asset_id, video.filename)
+    except Exception as e:
+        log_error('Error setting policies on video with id "%s" and id on target platform "%s". Error %s' % (video.video_id, target_platform_video_id, e))
+        log_error(traceback.format_tb(e.__traceback__))
+        registry.set_message_and_persist("Warning while setting policies: %s" % e)
+        raise SuccessWithWarningException() from e
 
 
+def create_asset(youtube_partner, content_owner_id, title, description):
+    """ This creates a new asset corresponding to a video on the web.
+    The asset is linked to the corresponding YouTube video via a
+    claim that will be created later.
+    """
+    body = dict(
+        type="web",
+        metadata=dict(
+            title=title,
+            description=description
+        )
+    )
+
+    assets_insert_response = youtube_partner.assets().insert(
+        onBehalfOfContentOwner=content_owner_id,
+        body=body
+    ).execute()
+    log_info("Asset created: %s" % assets_insert_response)
+    return assets_insert_response["id"]
+
+
+def set_asset_ownership(youtube_partner, content_owner_id, asset_id):
+    # This specifies that content_owner_id owns 100% of the asset worldwide.
+    body = dict(
+        general=[dict(
+            owner=content_owner_id,
+            ratio=100,
+            type="exclude",
+            territories=[]
+        )]
+    )
+
+    youtube_partner.ownership().update(
+        onBehalfOfContentOwner=content_owner_id,
+        assetId=asset_id,
+        body=body
+    ).execute()
+
+
+def claim_video(youtube_partner, content_owner_id, asset_id, video_id):
+    """ Creates a claim for the video.
+    This makes sure the UsagePolicy is set correctly.
+    """
+    log_info("Claiming video %s for asset %s." % (video_id, asset_id))
+    policy = dict(
+        id='S167739528016254'
+    )
+
+    body = dict(
+        assetId=asset_id,
+        videoId=video_id,
+        policy=policy,
+        contentType="audiovisual"
+    )
+
+    claims_insert_response = youtube_partner.claims().insert(
+        onBehalfOfContentOwner=content_owner_id,
+        body=body
+    ).execute()
+
+    log_info("Video claimed. %s" % claims_insert_response)
+    return claims_insert_response["id"]
+
+
+def set_match_policy(youtube_partner, asset_id):
+    match_policy_response = youtube_partner.assetMatchPolicy().update(
+        assetId=asset_id,
+        body={
+            'policyId': 'S167739528016254'
+        }
+    ).execute()
+    log_info('Added match policy: %s' % match_policy_response)
+    return match_policy_response
+
+
+def create_reference_from_claim(youtube_partner, claim_id, content_owner):
+    """ Creates a reference from the specified claim_id
+
+    needs the video to be completely processed on youtube. Currently this is not an option in our workflow.
+    """
+    reference_response = youtube_partner.references().insert(
+        claimId=claim_id,
+        onBehalfOfContentOwner=content_owner,
+        body={
+            'contentType':'audiovisual'
+        }
+    ).execute()
+    log_info('Created reference: %s' % reference_response)
+    return reference_response
+
+
+def create_reference(youtube_partner, asset_id, reference_file):
+    """ Create a reference by uploading the video content.
+    Uploads the specified reference_file to youtube so that a reference object is created. The reference file
+    usually is the same file as the video to be uploaded.
+    """
+    log_info("Uploading reference for asset %s. File: %s" % (asset_id, reference_file))
+    reference_service = youtube_partner.references()
+    media = MediaFileUpload(reference_file, resumable=True)
+    request = reference_service.insert(
+        body={'assetId': asset_id, 'contentType': 'audiovisual'},
+        media_body=media)
+    status, response = request.next_chunk()
+    while response is None:
+        status, response = request.next_chunk()
+    log_info('Reference for asset %s has been created: %s' % (asset_id, response))
+
+
+
+class SuccessWithWarningException(Exception):
+    """ Raised if in some step a warnings message should remain in the registry database but the overall state
+    sould still be set to 'active'.
+    """
+    def __init__(self, *args, **kwargs):
+        pass
