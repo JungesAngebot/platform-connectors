@@ -281,9 +281,11 @@ def claim_video_on_youtube(youtube_partner, content_owner_id, target_platform_vi
         log_info("Setting policies for video: %s" % video.__dict__)
         asset_id = create_asset(youtube_partner, content_owner_id, video.title, video.description)
         set_asset_ownership(youtube_partner, content_owner_id, asset_id)
-        set_match_policy(youtube_partner, asset_id)
         claim_id = claim_video(youtube_partner, content_owner_id, asset_id, target_platform_video_id)
-        create_reference(youtube_partner, asset_id, video.filename)
+        # The following methods are required to set the match policy for a video.
+        # Currently we do not set this automatically.
+        # set_match_policy(youtube_partner, asset_id)
+        # create_reference(youtube_partner, asset_id, video.filename)
     except Exception as e:
         log_error('Error setting policies on video with id "%s" and id on target platform "%s". Error %s' % (video.video_id, target_platform_video_id, e))
         log_error(traceback.format_tb(e.__traceback__))
@@ -354,50 +356,52 @@ def claim_video(youtube_partner, content_owner_id, asset_id, video_id):
     log_info("Video claimed. %s" % claims_insert_response)
     return claims_insert_response["id"]
 
-
-def set_match_policy(youtube_partner, asset_id):
-    match_policy_response = youtube_partner.assetMatchPolicy().update(
-        assetId=asset_id,
-        body={
-            'policyId': 'S167739528016254'
-        }
-    ).execute()
-    log_info('Added match policy: %s' % match_policy_response)
-    return match_policy_response
-
-
-def create_reference_from_claim(youtube_partner, claim_id, content_owner):
-    """ Creates a reference from the specified claim_id
-
-    needs the video to be completely processed on youtube. Currently this is not an option in our workflow.
-    """
-    reference_response = youtube_partner.references().insert(
-        claimId=claim_id,
-        onBehalfOfContentOwner=content_owner,
-        body={
-            'contentType':'audiovisual'
-        }
-    ).execute()
-    log_info('Created reference: %s' % reference_response)
-    return reference_response
-
-
-def create_reference(youtube_partner, asset_id, reference_file):
-    """ Create a reference by uploading the video content.
-    Uploads the specified reference_file to youtube so that a reference object is created. The reference file
-    usually is the same file as the video to be uploaded.
-    """
-    log_info("Uploading reference for asset %s. File: %s" % (asset_id, reference_file))
-    reference_service = youtube_partner.references()
-    media = MediaFileUpload(reference_file, resumable=True)
-    request = reference_service.insert(
-        body={'assetId': asset_id, 'contentType': 'audiovisual'},
-        media_body=media)
-    status, response = request.next_chunk()
-    while response is None:
-        status, response = request.next_chunk()
-    log_info('Reference for asset %s has been created: %s' % (asset_id, response))
-
+# We do not set the match policy automatically. Hence, the following methods are currently not required
+# As this behaviour may change in the future the methods are currenly just commentet out.
+#
+# def set_match_policy(youtube_partner, asset_id):
+#     match_policy_response = youtube_partner.assetMatchPolicy().update(
+#         assetId=asset_id,
+#         body={
+#             'policyId': 'S167739528016254'
+#         }
+#     ).execute()
+#     log_info('Added match policy: %s' % match_policy_response)
+#     return match_policy_response
+#
+#
+# def create_reference_from_claim(youtube_partner, claim_id, content_owner):
+#     """ Creates a reference from the specified claim_id
+#
+#     needs the video to be completely processed on youtube. Currently this is not an option in our workflow.
+#     """
+#     reference_response = youtube_partner.references().insert(
+#         claimId=claim_id,
+#         onBehalfOfContentOwner=content_owner,
+#         body={
+#             'contentType':'audiovisual'
+#         }
+#     ).execute()
+#     log_info('Created reference: %s' % reference_response)
+#     return reference_response
+#
+#
+# def create_reference(youtube_partner, asset_id, reference_file):
+#     """ Create a reference by uploading the video content.
+#     Uploads the specified reference_file to youtube so that a reference object is created. The reference file
+#     usually is the same file as the video to be uploaded.
+#     """
+#     log_info("Uploading reference for asset %s. File: %s" % (asset_id, reference_file))
+#     reference_service = youtube_partner.references()
+#     media = MediaFileUpload(reference_file, resumable=True)
+#     request = reference_service.insert(
+#         body={'assetId': asset_id, 'contentType': 'audiovisual'},
+#         media_body=media)
+#     status, response = request.next_chunk()
+#     while response is None:
+#         status, response = request.next_chunk()
+#     log_info('Reference for asset %s has been created: %s' % (asset_id, response))
+#
 
 
 class SuccessWithWarningException(Exception):
