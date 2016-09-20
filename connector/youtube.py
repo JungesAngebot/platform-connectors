@@ -172,6 +172,28 @@ def upload_thumbnail_for_video_if_exists(youtube, content_owner, image_filename,
         log_error(e.__traceback__)
 
 
+def upload_captions_for_video_if_exists(youtube, captions_filename, yt_video_id, registry: RegistryModel):
+    try:
+        if captions_filename:
+            youtube.captions().insert(
+                part="snippet",
+                body=dict(
+                    snippet=dict(
+                        videoId=yt_video_id,
+                        language='de',
+                        name="Deutsch"
+                    )
+                ),
+                media_body=captions_filename
+            ).execute()
+        else:
+            log_info('No captions to uplaod for youtube video %s and registry %s' % (yt_video_id, registry.registry_id))
+    except Exception as e:
+        registry.message = 'Error uploading captions of registry entry %s to youtube. Error: %s' % (registry.registry_id, e)
+        log_error(registry.message)
+        log_error(traceback.format_exc())
+
+
 def upload_video_to_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner, channel_id):
     """ Triggers the video upload initialization method.
     For each video the gathered metadata will be set
@@ -186,6 +208,7 @@ def upload_video_to_youtube(youtube, video: VideoModel, registry: RegistryModel,
         if video_id and video_id != '':
             registry.target_platform_video_id = video_id
             upload_thumbnail_for_video_if_exists(youtube, content_owner, video.image_filename, video_id, registry)
+            upload_captions_for_video_if_exists(youtube, video.captions_filename, video_id, registry)
             registry.set_state_and_persist('active')
         else:
             raise Exception('Upload failed, no youtube_id responded for registry %s' % registry.registry_id)
@@ -281,9 +304,9 @@ def claim_video_on_youtube(youtube_partner, content_owner_id, target_platform_vi
         log_info("Setting policies for video: %s" % video.__dict__)
         asset_id = create_asset(youtube_partner, content_owner_id, video.title, video.description)
         set_asset_ownership(youtube_partner, content_owner_id, asset_id)
-        set_match_policy(youtube_partner, asset_id)
         claim_id = claim_video(youtube_partner, content_owner_id, asset_id, target_platform_video_id)
-        create_reference(youtube_partner, asset_id, video.filename)
+        # set_match_policy(youtube_partner, asset_id)
+        # create_reference(youtube_partner, asset_id, video.filename)
     except Exception as e:
         log_error('Error setting policies on video with id "%s" and id on target platform "%s". Error %s' % (video.video_id, target_platform_video_id, e))
         log_error(traceback.format_tb(e.__traceback__))

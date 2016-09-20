@@ -146,9 +146,11 @@ class VideoModel(object):
         self.keywords = None
         self.filename = None
         self.download_url = None
+        self.captions_url = None
         self.image_id = None
         self.hash_code = None
         self.image_filename = None
+        self.captions_filename = None
 
     @classmethod
     def create_from_video_id(cls, video_id):
@@ -164,6 +166,7 @@ class VideoModel(object):
             video.keywords = video_dict['tags'].split(',') if 'tags' in video_dict and video_dict['tags'] else []
             video.keywords = [keyword.strip() for keyword in video.keywords]
             video.download_url = video_dict['flavourSourceUrl'] if 'flavourSourceUrl' in video_dict else None
+            video.captions_url = video_dict['captionsUrl'] if 'captionsUrl' in video_dict else None
             video.image_id = video_dict['imageid'] if 'imageid' in video_dict else None
             video_hash_code = hashlib.md5()
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
@@ -171,6 +174,7 @@ class VideoModel(object):
             video.hash_code = video_hash_code.hexdigest()
             video.filename = 'data/%s-%s.mpeg' % (video_id, str(uuid.uuid4()))
             video.image_filename = 'data/%s-%s.png' % (video_id, str(uuid.uuid4()))
+            video.captions_filename = 'data/%s-%s.srt' % (video_id, str(uuid.uuid4()))
             log_debug('Loaded video model with id %s successfully.' % video_id)
             return video
         except Exception as e:
