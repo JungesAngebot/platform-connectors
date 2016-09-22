@@ -1,9 +1,10 @@
 import datetime
 import hashlib
 import json
+import traceback
 
 import requests
-from commonspy.logging import log_info
+from commonspy.logging import log_info, log_warning
 
 from connector.db import MappingModel, VideoModel, RegistryModel
 
@@ -46,13 +47,40 @@ def upload_video_to_facebook(video: VideoModel, registry: RegistryModel):
         log_info('Facebook result: %s' % result.content)
 
         if result.status_code == 200:
-            registry.target_platform_video_id = result.json()['id']
+            facebook_video_id = result.json()['id']
+            registry.target_platform_video_id = facebook_video_id
             registry.set_state_and_persist('active')
+            _upload_captions_if_exist(video, facebook_video_id, mapping)
         else:
             raise Exception('Invalid response: %s' % result.content)
 
     except Exception as e:
         raise Exception('Error uploading video of registry entry %s to facebook.' % registry.registry_id) from e
+
+
+def _upload_captions_if_exist(video:VideoModel, facebook_video_id, mapping):
+    try:
+        video_captions_url = API_URL + '%s/captions' % facebook_video_id
+        if video.captions_filename:
+            body = {
+                'default_locale': 'de_DE'
+            }
+            files = {
+                'captions_file': ('captions.de_DE.srt', open(video.captions_filename, 'rb'), 'application/octet-stream')
+            }
+            headers = {
+                'Authorization': 'OAuth %s' % str(mapping.target_id),
+            }
+            result = requests.post(video_captions_url, data=body, files=files, headers=headers)
+            if result.status_code == 200:
+                log_info('Successfully uploaded captions for video %s' % video.video_id)
+            else:
+                raise Exception('Invalid response: %s' % result.content)
+        else:
+            log_info('No captions to upload for video %s' % video.video_id)
+    except Exception as e:
+        log_warning('Error uploading captions for video %s. Error: %s' % (video.video_id, e))
+        log_warning(traceback.format_exc())
 
 
 def update_video_on_facebook(video: VideoModel, registry: RegistryModel):

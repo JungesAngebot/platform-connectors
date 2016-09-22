@@ -174,7 +174,7 @@ class VideoModel(object):
             video.hash_code = video_hash_code.hexdigest()
             video.filename = 'data/%s-%s.mpeg' % (video_id, str(uuid.uuid4()))
             video.image_filename = 'data/%s-%s.png' % (video_id, str(uuid.uuid4()))
-            video.captions_filename = 'data/%s-%s.srt' % (video_id, str(uuid.uuid4()))
+            video.captions_filename = 'data/%s-%s.de_DE.srt' % (video_id, str(uuid.uuid4()))
             log_debug('Loaded video model with id %s successfully.' % video_id)
             return video
         except Exception as e:
