@@ -62,6 +62,7 @@ class RegistryModel(object):
         self.mapping_id = None
         self.video_hash_code = None
         self.last_update = None
+        self.captions_uploaded = False
 
     def update_video_hash_code(self, hash_code):
         self.video_hash_code = hash_code
@@ -82,6 +83,10 @@ class RegistryModel(object):
 
     def set_message_and_persist(self, message):
         self.message = message
+        self._persist()
+
+    def set_captions_uploaded_and_persist(self, captions_uploaded):
+        self.captions_uploaded = captions_uploaded
         self._persist()
 
     def _persist(self):
@@ -105,7 +110,8 @@ class RegistryModel(object):
             targetPlatformVideoId=self.target_platform_video_id,
             mappingId=self.mapping_id,
             video_hash_code=self.video_hash_code,
-            lastUpdate=self.last_update
+            lastUpdate=self.last_update,
+            captionsUploaded=self.captions_uploaded
         )
 
     @classmethod
@@ -128,6 +134,7 @@ class RegistryModel(object):
             obj.intermediate_state = registry_obj['intermediateState'] if 'intermediateState' in registry_obj else ''
             obj.video_hash_code = registry_obj['video_hash_code'] if 'video_hash_code' in registry_obj else ''
             obj.last_update = registry_obj['lastUpdate'] if 'lastUpdate' in registry_obj else None
+            obj.captions_uploaded = registry_obj['captionsUploaded'] if 'captionsUploaded' in registry_obj else False
             log_debug('Loaded registry entry with id %s successfully.' % registry_id)
             return obj
         except Exception as e:
@@ -151,6 +158,7 @@ class VideoModel(object):
         self.hash_code = None
         self.image_filename = None
         self.captions_filename = None
+        self.captions_uploaded = False
 
     @classmethod
     def create_from_video_id(cls, video_id):
