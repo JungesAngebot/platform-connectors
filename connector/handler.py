@@ -37,6 +37,9 @@ def update_request(registry_id):
             elif registry_model.intermediate_state == 'updating':
                 log_info('Retrying updating... registry id: %s' % registry_id)
                 Updating.create_updating_state(registry_model).run()
+            else:
+                log_info('No proper intermediate state found. Starting download... registry id: %s' % registry_id)
+                Downloading.create_downloading_state(registry_model).run()
     except Exception as e:
         log_error(e.__traceback__)
         traceback.print_tb(e.__traceback__)
