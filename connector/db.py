@@ -62,6 +62,7 @@ class RegistryModel(object):
         self.mapping_id = None
         self.video_hash_code = None
         self.last_update = None
+        self.captions_uploaded = False
 
     def update_video_hash_code(self, hash_code):
         self.video_hash_code = hash_code
@@ -82,6 +83,10 @@ class RegistryModel(object):
 
     def set_message_and_persist(self, message):
         self.message = message
+        self._persist()
+
+    def set_captions_uploaded_and_persist(self, captions_uploaded):
+        self.captions_uploaded = captions_uploaded
         self._persist()
 
     def _persist(self):
@@ -105,7 +110,8 @@ class RegistryModel(object):
             targetPlatformVideoId=self.target_platform_video_id,
             mappingId=self.mapping_id,
             video_hash_code=self.video_hash_code,
-            lastUpdate=self.last_update
+            lastUpdate=self.last_update,
+            captionsUploaded=self.captions_uploaded
         )
 
     @classmethod
@@ -128,6 +134,7 @@ class RegistryModel(object):
             obj.intermediate_state = registry_obj['intermediateState'] if 'intermediateState' in registry_obj else ''
             obj.video_hash_code = registry_obj['video_hash_code'] if 'video_hash_code' in registry_obj else ''
             obj.last_update = registry_obj['lastUpdate'] if 'lastUpdate' in registry_obj else None
+            obj.captions_uploaded = registry_obj['captionsUploaded'] if 'captionsUploaded' in registry_obj else False
             log_debug('Loaded registry entry with id %s successfully.' % registry_id)
             return obj
         except Exception as e:
@@ -146,9 +153,12 @@ class VideoModel(object):
         self.keywords = None
         self.filename = None
         self.download_url = None
+        self.captions_url = None
         self.image_id = None
         self.hash_code = None
         self.image_filename = None
+        self.captions_filename = None
+        self.captions_uploaded = False
 
     @classmethod
     def create_from_video_id(cls, video_id):
@@ -164,6 +174,7 @@ class VideoModel(object):
             video.keywords = video_dict['tags'].split(',') if 'tags' in video_dict and video_dict['tags'] else []
             video.keywords = [keyword.strip() for keyword in video.keywords]
             video.download_url = video_dict['flavourSourceUrl'] if 'flavourSourceUrl' in video_dict else None
+            video.captions_url = video_dict['captionsUrl'] if 'captionsUrl' in video_dict else None
             video.image_id = video_dict['imageid'] if 'imageid' in video_dict else None
             video_hash_code = hashlib.md5()
             video_hash_code.update(bytes(video.title.encode('UTF-8')))
@@ -171,6 +182,7 @@ class VideoModel(object):
             video.hash_code = video_hash_code.hexdigest()
             video.filename = 'data/%s-%s.mpeg' % (video_id, str(uuid.uuid4()))
             video.image_filename = 'data/%s-%s.png' % (video_id, str(uuid.uuid4()))
+            video.captions_filename = 'data/%s-%s.de_DE.srt' % (video_id, str(uuid.uuid4()))
             log_debug('Loaded video model with id %s successfully.' % video_id)
             return video
         except Exception as e:

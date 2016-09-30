@@ -23,9 +23,11 @@ def update_request(registry_id):
             log_info('New video detected. Starting upload workflow. registry id: %s' % registry_id)
             Downloading.create_downloading_state(registry_model).run()
         elif registry_model.status == 'active':
-            log_info('Updating an existing video is currently not supported. Ignoring request. registry id: %s' % registry_id)
-#            log_info('Existing video will be updated. registry id: %s' % registry_id)
-#            Updating.create_updating_state(registry_model).run()
+            if registry_model.captions_uploaded:
+                log_info('Captions already uploaded for video. Updating an existing video is currently not supported. Ignoring request. registry id: %s' % registry_id)
+            else:
+                log_info('Captions will be uploaded for video if set in Kaltura. Existing video will be updated. registry id: %s' % registry_id)
+                Updating.create_updating_state(registry_model).run()
         elif registry_model.status == 'inactive':
             log_info('Detected inactive video. Activating it again. registry id: %s' % registry_id)
             Active.create_active_state(registry_model).run()
@@ -41,7 +43,7 @@ def update_request(registry_id):
                 log_info('No proper intermediate state found. Starting download... registry id: %s' % registry_id)
                 Downloading.create_downloading_state(registry_model).run()
     except Exception as e:
-        log_error(e.__traceback__)
+        log_error(traceback.format_tb(e.__traceback__))
         traceback.print_tb(e.__traceback__)
         return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})
@@ -56,7 +58,7 @@ def unpublish_request(registry_id):
             log_info('Unpublishing video... registry id: %s' % registry_id)
             Unpublish.create_unpublish_state(registry_model).run()
     except Exception as e:
-        log_error(e.__traceback__)
+        log_error(traceback.format_tb(e.__traceback__))
         traceback.print_tb(e.__traceback__)
         return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})
@@ -69,7 +71,7 @@ def delete_request(registry_id):
         registry_model = RegistryModel.create_from_registry_id(registry_id)
         Deleting.create_deleting_state(registry_model).run()
     except Exception as e:
-        log_error(e.__traceback__)
+        log_error(traceback.format_tb(e.__traceback__))
         traceback.print_tb(e.__traceback__)
         return jsonify({'status': 'error'})
     return jsonify({'status': 'success'})
