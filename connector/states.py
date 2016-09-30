@@ -150,7 +150,7 @@ class Active(object):
         if os.path.isfile(video.image_filename):
             os.remove(video.image_filename)
             log_debug("Cleaning up thumbnail file: %s" % video.image_filename)
-        if os.path.isfile(video.captions_filename):
+        if video.captions_filename and os.path.isfile(video.captions_filename):
             os.remove(video.captions_filename)
             log_debug("Cleaning up captions file: %s" % video.captions_filename)
 
