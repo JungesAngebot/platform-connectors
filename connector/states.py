@@ -202,6 +202,7 @@ class Updating(object):
                 self.registry_model.registry_id, self.registry_model.target_platform))
             self.registry_model.set_intermediate_state_and_persist('updating')
             video_model = self.video_model_class.create_from_video_id(self.registry_model.video_id)
+            persist_video_image_on_disk(video_model)
             self.captions_download(video_model)
             self.interaction.execute_platform_interaction(self.registry_model.target_platform, 'update', video_model,
                                                           self.registry_model)

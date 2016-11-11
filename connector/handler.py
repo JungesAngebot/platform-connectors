@@ -24,7 +24,8 @@ def update_request(registry_id):
             Downloading.create_downloading_state(registry_model).run()
         elif registry_model.status == 'active':
             if registry_model.captions_uploaded:
-                log_info('Captions already uploaded for video. Updating an existing video is currently not supported. Ignoring request. registry id: %s' % registry_id)
+                # log_info('Captions already uploaded for video. Updating an existing video is currently not supported. Ignoring request. registry id: %s' % registry_id)
+                Updating.create_updating_state(registry_model).run()
             else:
                 log_info('Captions will be uploaded for video if set in Kaltura. Existing video will be updated. registry id: %s' % registry_id)
                 Updating.create_updating_state(registry_model).run()

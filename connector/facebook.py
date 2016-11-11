@@ -226,39 +226,36 @@ def update_video_on_facebook(video: VideoModel, registry: RegistryModel):
 
     _upload_captions_if_exist(video, facebook_id, mapping, registry)
 
+    if video.hash_code == registry.video_hash_code:
+        log_info('Metadata of registry entry %s not changed, so no update needed.' % registry.registry_id)
+        return
 
-    # if video.hash_code == registry.video_hash_code:
-    #     log_info('Metadata of registry entry %s not changed, so no update needed.' % registry.registry_id)
-    #     return
-    #
-    # mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
-    # try:
-    #     get_metadata_url = API_URL + '/' + registry.target_platform_video_id + '?access_token=' + str(
-    #         mapping.target_id) + '&fields=description,content_tags,title'
-    #
-    #     metadata_result = requests.get(get_metadata_url).json()
-    #
-    #     video_remote_hash = create_metadata_hash(metadata_result)
-    #
-    #     if registry.video_hash_code != video_remote_hash:
-    #         log_info('Metadata of video %s was changed on facebook. No update allowed.' % registry.registry_id)
-    #         return
-    #
-    #     body = {
-    #         'access_token': str(mapping.target_id),
-    #         'name': video.title,
-    #         'description': video.description
-    #     }
-    #
-    #     update_url = API_URL + '/' + registry.target_platform_video_id
-    #
-    #     result = requests.post(update_url, body)
-    #
-    #     if result.status_code != 200:
-    #         raise Exception('Invalid response: %s' % result.content)
-    #
-    # except Exception as e:
-    #     raise Exception('Error updating video of registry entry %s on facebook.' % registry.registry_id) from e
+    mapping = MappingModel.create_from_mapping_id(registry.mapping_id)
+    try:
+        get_metadata_url = API_URL + '/' + registry.target_platform_video_id + '?access_token=' + str(
+            mapping.target_id) + '&fields=description,content_tags,title'
+
+        body = {
+            'access_token': str(mapping.target_id),
+            'name': video.title,
+            'description': video.description
+        }
+
+        update_url = API_URL + '/' + registry.target_platform_video_id
+
+        if video.image_filename:
+            files = {
+                'thumb': open(video.image_filename, 'rb'),
+            }
+            result = requests.post(update_url, data=body, files=files)
+        else:
+            result = requests.post(update_url, data=body)
+
+        if result.status_code != 200:
+            raise Exception('Invalid response: %s' % result.content)
+
+    except Exception as e:
+        raise Exception('Error updating video of registry entry %s on facebook.' % registry.registry_id) from e
 
 
 def unpublish_video_on_facebook(video: VideoModel, registry: RegistryModel):

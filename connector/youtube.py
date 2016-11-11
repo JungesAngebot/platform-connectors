@@ -235,48 +235,40 @@ def update_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel,
 
     upload_captions_for_video_if_exists(youtube, video.captions_filename, youtube_id, registry)
 
-
     # old code for updating videos on youtube. Kept as updating might be supported some time in the near future
-    #
-    # if video.hash_code == registry.video_hash_code:
-    #     log_info('Metadata of registry entry %s not changed, so no update needed.' % registry.registry_id)
-    #     return
-    #
-    # youtube_id = registry.target_platform_video_id
-    #
-    # if youtube_id is None:
-    #     raise UpdateError('Youtube_id not found for ' + registry.registry_id)
-    #
-    # try:
-    #     video_list_response = youtube.videos().list(
-    #         id=youtube_id,
-    #         part='snippet'
-    #     ).execute()
-    #     if not video_list_response['items']:
-    #         raise UpdateError('Video not found for id ' + youtube_id)
-    #
-    #     video_metadata = video_list_response['items'][0]['snippet']
-    #
-    #     video_remote_hash = create_metadata_hash(video_metadata)
-    #
-    #     if registry.video_hash_code != video_remote_hash:
-    #         log_info('Metadata of video %s was changed on youtube. No update allowed.' % registry.registry_id)
-    #         return
-    #
-    #     video_metadata['title'] = video.title
-    #     video_metadata['description'] = video.description
-    #     video_metadata['tags'] = video.keywords
-    #
-    #     youtube.videos().update(
-    #         part='snippet',
-    #         onBehalfOfContentOwner=content_owner,
-    #         body=dict(
-    #             snippet=video_metadata,
-    #             id=youtube_id
-    #         )
-    #     ).execute()
-    # except Exception as e:
-    #     raise Exception('Error updating video of registry entry %s on youtube.' % registry.registry_id) from e
+    if video.hash_code == registry.video_hash_code:
+        log_info('Metadata of registry entry %s not changed, so no update needed.' % registry.registry_id)
+        return
+    upload_thumbnail_for_video_if_exists(youtube, content_owner, video.image_filename, youtube_id, registry)
+    youtube_id = registry.target_platform_video_id
+
+    if youtube_id is None:
+        raise UpdateError('Youtube_id not found for ' + registry.registry_id)
+
+    try:
+        video_list_response = youtube.videos().list(
+            id=youtube_id,
+            part='snippet'
+        ).execute()
+        if not video_list_response['items']:
+            raise UpdateError('Video not found for id ' + youtube_id)
+
+        video_metadata = video_list_response['items'][0]['snippet']
+
+        video_metadata['title'] = video.title
+        video_metadata['description'] = video.description
+        video_metadata['tags'] = video.keywords
+
+        youtube.videos().update(
+            part='snippet',
+            onBehalfOfContentOwner=content_owner,
+            body=dict(
+                snippet=video_metadata,
+                id=youtube_id
+            )
+        ).execute()
+    except Exception as e:
+        raise Exception('Error updating video of registry entry %s on youtube.' % registry.registry_id) from e
 
 
 def unpublish_video_on_youtube(youtube, video: VideoModel, registry: RegistryModel, content_owner):
